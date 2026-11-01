@@ -10,6 +10,14 @@
 <link rel="stylesheet" href="ds/rejectwise/tokens.css">
 <link rel="stylesheet" href="ds/rejectwise/components/bundle.css">
 <script src="ds/rejectwise/components/bundle.js"></script>
+<!-- RejectWise Core Modules -->
+<script src="app/models.js"></script>
+<script src="app/calculations.js"></script>
+<script src="app/validation.js"></script>
+<script src="app/alerts.js"></script>
+<script src="app/storage.js"></script>
+<script src="app/recordModal.js"></script>
+<script src="app/deviceModal.js"></script>
 </head>
 <body>
 <x-dc>
@@ -34,7 +42,7 @@ a:hover { color: #10382d; text-decoration-color: currentColor; }
 .third { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 2fr); gap: 24px; align-items: start; }
 .strip { display: grid; grid-template-columns: repeat(6, minmax(0, 1fr)); gap: 1px; background: #e1e7e1; }
 .ledger-eyebrow { min-height: 30px; }
-.rail-ctx { display: flex; gap: 12px; flex-wrap: wrap; align-items: center; }
+.rail-ctx { display: flex; gap: 10px; flex-wrap: wrap; align-items: center; }
 @media (max-width: 1279px) { .hero { grid-template-columns: minmax(0, 1fr); } .master { grid-template-columns: minmax(0, 1fr); } }
 @media (max-width: 1099px) { .split, .third { grid-template-columns: minmax(0, 1fr); gap: 24px; } }
 @media (max-width: 1023px) {
@@ -76,13 +84,21 @@ a:hover { color: #10382d; text-decoration-color: currentColor; }
             <span class="mono" style="font-size: 12px; color: var(--ink-secondary);">{{checkedLabel}}</span>
           </sc-if>
           <sc-if value="{{hasData}}" hint-placeholder-val="{{true}}">
-            <x-import component-from-global-scope="RejectWise.DataLabel" kind="demo"></x-import>
+            <x-import component-from-global-scope="RejectWise.DataLabel" kind="{{activeDataBadgeKind}}">{{activeDataBadgeLabel}}</x-import>
           </sc-if>
         </div>
         <div class="rail-ctx">
-          <x-import component-from-global-scope="RejectWise.Select" aria-label="Device" icon="device" options="{{deviceOptions}}" value="{{device}}" on-change="{{changeDevice}}" style="width: 236px;"></x-import>
+          <x-import component-from-global-scope="RejectWise.Select" aria-label="Device" icon="device" options="{{deviceOptions}}" value="{{device}}" on-change="{{changeDevice}}" style="width: 220px;"></x-import>
+          <x-import component-from-global-scope="RejectWise.Button" variant="quiet" size="sm" icon="device" on-click="{{openAddDevice}}" title="Add new purifier unit">+ Device</x-import>
           <sc-if value="{{showRange}}" hint-placeholder-val="{{true}}">
-            <x-import component-from-global-scope="RejectWise.Select" aria-label="Period" icon="calendar" options="{{rangeOptions}}" value="{{range}}" on-change="{{changeRange}}" disabled="{{noData}}" style="width: 236px;"></x-import>
+            <x-import component-from-global-scope="RejectWise.Select" aria-label="Period" icon="calendar" options="{{rangeOptions}}" value="{{range}}" on-change="{{changeRange}}" disabled="{{noData}}" style="width: 180px;"></x-import>
+          </sc-if>
+          <sc-if value="{{isCustomRange}}" hint-placeholder-val="{{false}}">
+            <div style="display: inline-flex; align-items: center; gap: 6px; font-size: 12px;">
+              <input type="date" value="{{customStart}}" onChange="{{setCustomStart}}" style="padding: 6px 8px; border: 1px solid var(--border); border-radius: 6px; background: var(--surface); color: var(--ink); font-size: 12px;" />
+              <span style="color: var(--ink-secondary);">to</span>
+              <input type="date" value="{{customEnd}}" onChange="{{setCustomEnd}}" style="padding: 6px 8px; border: 1px solid var(--border); border-radius: 6px; background: var(--surface); color: var(--ink); font-size: 12px;" />
+            </div>
           </sc-if>
         </div>
       </div>
@@ -96,6 +112,7 @@ a:hover { color: #10382d; text-decoration-color: currentColor; }
           <p style="margin: 0; font-size: 14px; color: var(--ink-secondary); max-width: 640px;">{{pageDesc}}</p>
         </div>
         <div style="display: flex; flex-wrap: wrap; gap: 8px; align-items: center;">
+          <x-import component-from-global-scope="RejectWise.Button" variant="primary" icon="history" on-click="{{openAddRecord}}">+ Add Test Record</x-import>
           <sc-if value="{{showRefresh}}" hint-placeholder-val="{{true}}">
             <x-import component-from-global-scope="RejectWise.Button" variant="quiet" icon="refresh" on-click="{{refresh}}">Refresh</x-import>
           </sc-if>
@@ -106,9 +123,12 @@ a:hover { color: #10382d; text-decoration-color: currentColor; }
       </div>
 
       <sc-if value="{{showEmpty}}" hint-placeholder-val="{{false}}">
-        <div style="background: var(--surface); border: 1px dashed var(--border-strong); border-radius: 8px; display: flex; flex-direction: column; align-items: center; padding-bottom: 32px;">
-          <x-import component-from-global-scope="RejectWise.StateMessage" kind="empty" title="No data from this device yet">{{deviceName}} has no sensors configured and has never sent a reading. Configure its sensors in Settings, then connect its ESP32.</x-import>
-          <x-import component-from-global-scope="RejectWise.Button" variant="primary" on-click="{{goSensors}}">Configure sensors</x-import>
+        <div style="background: var(--surface); border: 1px dashed var(--border-strong); border-radius: 8px; display: flex; flex-direction: column; align-items: center; padding: 32px 24px; gap: 14px;">
+          <x-import component-from-global-scope="RejectWise.StateMessage" kind="empty" title="No test records for this device yet">{{deviceName}} has no recorded readings. Enter your first test run using manual entry, or configure sensors in Settings.</x-import>
+          <div style="display: flex; gap: 12px; align-items: center;">
+            <x-import component-from-global-scope="RejectWise.Button" variant="primary" icon="history" on-click="{{openAddRecord}}">+ Add First Test Record</x-import>
+            <x-import component-from-global-scope="RejectWise.Button" variant="secondary" on-click="{{goSensors}}">Configure sensors</x-import>
+          </div>
         </div>
       </sc-if>
 
@@ -192,7 +212,7 @@ a:hover { color: #10382d; text-decoration-color: currentColor; }
           <div style="display: flex; flex-wrap: wrap; align-items: baseline; justify-content: space-between; gap: 8px 16px;">
             <div style="display: flex; flex-wrap: wrap; align-items: baseline; gap: 8px 14px;">
               <h2 id="sq-h" style="margin: 0; font-size: 18px; line-height: 1.4; font-weight: 600; letter-spacing: -0.15px;">Water quality and flow</h2>
-              <span class="mono" style="font-size: 12px; color: var(--ink-secondary);">Last sample 30 Oct 2026, 10:42 AM</span>
+              <span class="mono" style="font-size: 12px; color: var(--ink-secondary);">{{lastSampleLabel}}</span>
             </div>
             <a href="#live" onClick="{{goLive}}" style="font-size: 13px;">Open live monitoring</a>
           </div>
@@ -258,7 +278,7 @@ a:hover { color: #10382d; text-decoration-color: currentColor; }
 
       <!-- ============ LIVE MONITORING ============ -->
       <sc-if value="{{show.live}}" hint-placeholder-val="{{false}}">
-        <x-import component-from-global-scope="RejectWise.InlineAlert" tone="warning" title="ESP32 not connected">{{liveNote}}</x-import>
+        <x-import component-from-global-scope="RejectWise.InlineAlert" tone="info" title="{{liveAlertTitle}}">{{liveNote}}</x-import>
         <sc-for list="{{liveGroups}}" as="g" hint-placeholder-count="2">
           <section style="display: flex; flex-direction: column; gap: 12px;">
             <h2 style="margin: 0; font-size: 18px; line-height: 1.4; font-weight: 600; letter-spacing: -0.15px;">{{g.title}}</h2>
@@ -310,7 +330,7 @@ a:hover { color: #10382d; text-decoration-color: currentColor; }
             <span style="font-size: 13px; color: var(--ink-secondary);">Input against product water, per recorded run in the period</span>
           </div>
           <x-import component-from-global-scope="RejectWise.DataTable" columns="{{qualityCols}}" rows="{{periodTests}}" on-row-click="{{openTest}}" empty-title="No test runs in this period" empty-text="Choose a longer period to compare runs."></x-import>
-          <p style="margin: 0; font-size: 12.5px; color: var(--ink-secondary);">TDS reduction is calculated as (input − product) ÷ input. Sensors were last calibrated on 12 Oct 2026 (Demo data); calibration details are in Settings.</p>
+          <p style="margin: 0; font-size: 12.5px; color: var(--ink-secondary);">TDS reduction is calculated as (input − product) ÷ input. Lab tests should be used for validated contaminant benchmarks.</p>
         </section>
       </sc-if>
 
@@ -390,13 +410,16 @@ a:hover { color: #10382d; text-decoration-color: currentColor; }
       <!-- ============ TEST HISTORY ============ -->
       <sc-if value="{{show.history}}" hint-placeholder-val="{{false}}">
         <div style="display: flex; flex-wrap: wrap; gap: 12px; align-items: flex-end;">
-          <x-import component-from-global-scope="RejectWise.TextField" label="Search" icon="search" placeholder="Test ID or note" value="{{testQuery}}" on-change="{{changeQuery}}" style="width: 280px;"></x-import>
-          <x-import component-from-global-scope="RejectWise.Select" label="Status" options="{{statusOptions}}" value="{{testStatus}}" on-change="{{changeStatus}}" style="width: 200px;"></x-import>
-          <x-import component-from-global-scope="RejectWise.Select" label="Date" icon="calendar" options="{{dateOptions}}" value="{{testDate}}" on-change="{{changeDate}}" style="width: 200px;"></x-import>
+          <x-import component-from-global-scope="RejectWise.TextField" label="Search" icon="search" placeholder="Test ID, condition or notes" value="{{testQuery}}" on-change="{{changeQuery}}" style="width: 260px;"></x-import>
+          <x-import component-from-global-scope="RejectWise.Select" label="Status" options="{{statusOptions}}" value="{{testStatus}}" on-change="{{changeStatus}}" style="width: 180px;"></x-import>
+          <x-import component-from-global-scope="RejectWise.Select" label="Date" icon="calendar" options="{{dateOptions}}" value="{{testDate}}" on-change="{{changeDate}}" style="width: 180px;"></x-import>
           <span class="mono" style="font-size: 12px; color: var(--ink-secondary); padding-bottom: 10px;">{{historyCount}}</span>
           <sc-if value="{{filtersOn}}" hint-placeholder-val="{{false}}">
             <x-import component-from-global-scope="RejectWise.Button" variant="quiet" on-click="{{clearFilters}}">Clear filters</x-import>
           </sc-if>
+          <div style="margin-left: auto;">
+            <x-import component-from-global-scope="RejectWise.Button" variant="primary" icon="history" on-click="{{openAddRecord}}">+ Add Test Run</x-import>
+          </div>
         </div>
         <dl style="margin: 0; display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 12px 24px; padding: 14px 18px; background: var(--surface-raised); border: 1px solid var(--border); border-radius: 8px;">
           <sc-for list="{{statusDefs}}" as="d" hint-placeholder-count="3">
@@ -407,7 +430,7 @@ a:hover { color: #10382d; text-decoration-color: currentColor; }
           </sc-for>
         </dl>
         <div class="{{testMaster}}">
-          <x-import component-from-global-scope="RejectWise.DataTable" columns="{{historyCols}}" rows="{{filteredTests}}" on-row-click="{{openTest}}" selected-id="{{testSel}}" empty-title="No runs match these filters" empty-text="Try a different search or clear the filters."></x-import>
+          <x-import component-from-global-scope="RejectWise.DataTable" columns="{{historyCols}}" rows="{{filteredTests}}" on-row-click="{{openTest}}" selected-id="{{testSel}}" empty-title="No runs match these filters" empty-text="Try a different search, clear the filters, or add a new test run."></x-import>
           <sc-if value="{{testDetail.on}}" hint-placeholder-val="{{false}}">
             <aside aria-label="Test details" style="background: var(--surface); border: 1px solid var(--border); border-radius: 8px; padding: 20px 24px; display: flex; flex-direction: column; gap: 16px;">
               <div style="display: flex; justify-content: space-between; align-items: flex-start; gap: 8px;">
@@ -418,9 +441,13 @@ a:hover { color: #10382d; text-decoration-color: currentColor; }
                 </div>
                 <x-import component-from-global-scope="RejectWise.Button" variant="quiet" size="sm" icon="close" aria-label="Close test details" on-click="{{closeTest}}"></x-import>
               </div>
-              <div style="display: flex; gap: 8px; flex-wrap: wrap;">
+              <div style="display: flex; gap: 8px; flex-wrap: wrap; align-items: center;">
                 <x-import component-from-global-scope="RejectWise.StatusChip" tone="{{testDetail.tone}}">{{testDetail.status}}</x-import>
-                <x-import component-from-global-scope="RejectWise.DataLabel" kind="demo"></x-import>
+                <x-import component-from-global-scope="RejectWise.DataLabel" kind="{{testDetail.sourceKind}}">{{testDetail.sourceLabel}}</x-import>
+                <div style="margin-left: auto; display: flex; gap: 6px;">
+                  <x-import component-from-global-scope="RejectWise.Button" size="sm" variant="secondary" on-click="{{editSelectedTest}}">Edit Run</x-import>
+                  <x-import component-from-global-scope="RejectWise.Button" size="sm" variant="quiet" on-click="{{askDeleteTest}}" style="color: var(--danger);">Delete Run</x-import>
+                </div>
               </div>
               <div style="display: flex; flex-direction: column; gap: 6px; padding: 12px 14px; border-radius: 6px; background: {{testDetail.reasonBg}};">
                 <span style="font-size: 13px; font-weight: 600;">{{testDetail.reasonTitle}}</span>
@@ -514,7 +541,7 @@ a:hover { color: #10382d; text-decoration-color: currentColor; }
               <span class="eyebrow">Report preview</span>
               <h2 style="margin: 2px 0 0; font-size: 18px; line-height: 1.4; font-weight: 600;">{{deviceName}} · {{rangeLong}}</h2>
             </div>
-            <span style="font-size: 13px; color: var(--ink-secondary);">The CSV contains the rows below, labelled as Demo data. PDF export is not available in this prototype.</span>
+            <span style="font-size: 13px; color: var(--ink-secondary);">The CSV contains active recorded rows. Export is ready for review or external analytics.</span>
           </div>
           <div class="ledger">
             <sc-for list="{{recLedger}}" as="m" hint-placeholder-count="8">
@@ -548,8 +575,8 @@ a:hover { color: #10382d; text-decoration-color: currentColor; }
             <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 16px;">
               <x-import component-from-global-scope="RejectWise.TextField" label="Device name" value="{{draft.name}}" on-change="{{setName}}" error="{{err.name}}"></x-import>
               <x-import component-from-global-scope="RejectWise.TextField" label="Location" value="{{draft.location}}" on-change="{{setLocation}}" hint="Where the unit is installed."></x-import>
-              <x-import component-from-global-scope="RejectWise.TextField" label="Collection tank capacity" type="number" unit="L" value="{{draft.capacity}}" on-change="{{setCapacity}}" error="{{err.capacity}}" hint="Used to estimate litres from the level sensor."></x-import>
-              <x-import component-from-global-scope="RejectWise.TextField" label="Controller" value="ESP32 · not connected" disabled="{{yes}}" hint="Connection is set up on the device, not here."></x-import>
+              <x-import component-from-global-scope="RejectWise.TextField" label="Collection tank capacity" type="number" unit="L" value="{{draft.capacity}}" on-change="{{setCapacity}}" error="{{err.capacity}}" hint="Used to calculate volume from level percentage."></x-import>
+              <x-import component-from-global-scope="RejectWise.TextField" label="Controller" value="{{controllerLabel}}" disabled="{{yes}}" hint="Hardware ESP32 or manual entry mode."></x-import>
             </div>
           </sc-if>
           <sc-if value="{{st.sensors}}" hint-placeholder-val="{{false}}">
@@ -576,12 +603,13 @@ a:hover { color: #10382d; text-decoration-color: currentColor; }
             </div>
           </sc-if>
           <sc-if value="{{st.privacy}}" hint-placeholder-val="{{false}}">
-            <div style="display: flex; flex-direction: column; gap: 12px; font-size: 14px; max-width: 640px;">
-              <p style="margin: 0;">This prototype shows Demo data only. Settings you change here are kept in this browser tab and are lost when it reloads.</p>
-              <p style="margin: 0;">When a device is connected, RejectWise stores sensor values, units, timestamps, the device ID and a data-quality status for each reading. It does not collect personal information about the people using the purifier.</p>
-              <p style="margin: 0; color: var(--ink-secondary);">Reuse entries record the volume and the stated non-drinking purpose only.</p>
-              <div>
-                <x-import component-from-global-scope="RejectWise.Button" variant="secondary" on-click="{{askReset}}">Restore default settings</x-import>
+            <div style="display: flex; flex-direction: column; gap: 14px; font-size: 14px; max-width: 680px;">
+              <p style="margin: 0; font-weight: 600;">Data Storage & Local Persistence</p>
+              <p style="margin: 0; color: var(--ink-secondary);">All manually entered test runs, water volumes, reuse records and device configurations are persisted in your local browser storage. Data remains safely available after refreshing the page.</p>
+              <p style="margin: 0; color: var(--ink-secondary);">The application architecture is decoupled through an API service layer, making it fully ready to integrate with an ESP32 hardware device in the future.</p>
+              <div style="display: flex; gap: 12px; flex-wrap: wrap; margin-top: 6px;">
+                <x-import component-from-global-scope="RejectWise.Button" variant="secondary" on-click="{{askReset}}">Restore default demo data</x-import>
+                <x-import component-from-global-scope="RejectWise.Button" variant="quiet" on-click="{{askClearAllData}}" style="color: var(--danger);">Clear all test runs (Start clean manual entry)</x-import>
               </div>
             </div>
           </sc-if>
@@ -593,15 +621,21 @@ a:hover { color: #10382d; text-decoration-color: currentColor; }
             </div>
           </sc-if>
         </div>
-        <x-import component-from-global-scope="RejectWise.ConfirmDialog" open="{{confirmReset}}" title="Restore default settings?" confirm-label="Restore defaults" tone="danger" on-confirm="{{doReset}}" on-cancel="{{cancelReset}}">Device names, tank capacity, sensor configuration and thresholds for both devices go back to their defaults. Unsaved edits are discarded.</x-import>
+        <x-import component-from-global-scope="RejectWise.ConfirmDialog" open="{{confirmReset}}" title="Restore default demo data?" confirm-label="Restore defaults" tone="danger" on-confirm="{{doReset}}" on-cancel="{{cancelReset}}">This will restore default demo test runs, tank capacity, and thresholds. Any unsaved edits will be discarded.</x-import>
+        <x-import component-from-global-scope="RejectWise.ConfirmDialog" open="{{confirmClearData}}" title="Clear all test runs?" confirm-label="Clear all records" tone="danger" on-confirm="{{doClearAllData}}" on-cancel="{{cancelClearData}}">All current test runs will be cleared from local storage so you can enter your own fresh purifier measurements. Device configurations will be preserved.</x-import>
       </sc-if>
 
-      <p style="margin: 8px 0 0; padding-top: 16px; border-top: 1px solid var(--border); font-size: 12px; color: var(--ink-secondary);">Prototype. Every reading, volume, alert and test run shown is Demo data, not a hardware measurement or a validated purifier benchmark. No live device is connected.</p>
+      <p style="margin: 8px 0 0; padding-top: 16px; border-top: 1px solid var(--border); font-size: 12px; color: var(--ink-secondary);">RejectWise Water Monitoring Application · Connected to local persistence · Manual Entry mode ready for ESP32 hardware integration.</p>
     </main>
   </div>
 
+  <!-- Interactive Modals -->
+  <x-import component-from-global-scope="RejectWise.RecordModal" open="{{recordModalOpen}}" mode="{{recordModalMode}}" initial-record="{{recordDraft}}" settings="{{cfg}}" devices="{{devicesList}}" active-device="{{device}}" on-save="{{handleSaveRecord}}" on-cancel="{{closeRecordModal}}"></x-import>
+  <x-import component-from-global-scope="RejectWise.DeviceModal" open="{{deviceModalOpen}}" is-edit="{{deviceModalIsEdit}}" initial-device="{{deviceDraft}}" on-save="{{handleSaveDevice}}" on-cancel="{{closeDeviceModal}}"></x-import>
+  <x-import component-from-global-scope="RejectWise.ConfirmDialog" open="{{confirmDeleteRecord}}" title="Delete this test run?" confirm-label="Delete run" tone="danger" on-confirm="{{doDeleteTest}}" on-cancel="{{cancelDeleteTest}}">This action cannot be undone. Test run {{deleteRecordId}} will be permanently removed, and all dashboard metrics, charts, and alerts will recalculate.</x-import>
+
   <sc-if value="{{toastOn}}" hint-placeholder-val="{{false}}">
-    <div style="position: fixed; right: 24px; bottom: 24px; left: auto; z-index: 70; max-width: calc(100vw - 48px);">
+    <div style="position: fixed; right: 24px; bottom: 24px; left: auto; z-index: 95; max-width: calc(100vw - 48px);">
       <x-import component-from-global-scope="RejectWise.Toast" tone="{{toast.tone}}" on-close="{{closeToast}}">{{toast.text}}</x-import>
     </div>
   </sc-if>
@@ -612,64 +646,40 @@ class Component extends DCLogic {
   constructor(props) {
     super(props);
     this.vw = typeof window !== 'undefined' ? window.innerWidth : 1440;
-    var d = this.defaults();
+    var storage = (window.RejectWiseApp && window.RejectWiseApp.storage) || {};
+    var activeDev = storage.getActiveDeviceId ? storage.getActiveDeviceId() : 'unit-01';
+    var allSettings = storage.getAllSettings ? storage.getAllSettings() : this.defaults();
+    var curSettings = allSettings[activeDev] || allSettings['unit-01'] || this.defaults()['unit-01'];
+
     this.state = {
-      page: 'overview', menuOpen: false, device: 'unit-01', range: '7d', chartView: 'volume',
+      page: 'overview', menuOpen: false, device: activeDev, range: '7d', chartView: 'volume',
+      customStart: '2026-10-24', customEnd: '2026-10-30',
       toast: null, checkedAt: null,
-      alerts: this.initialAlerts(),
+      alerts: storage.getAlerts ? storage.getAlerts(activeDev) : this.initialAlerts(),
       alertTab: 'active', alertSev: 'all', alertSel: 'A-104',
       testQuery: '', testStatus: 'all', testDate: 'all', testSel: null,
-      settingsTab: 'device', settings: d, draft: JSON.parse(JSON.stringify(d['unit-01'])), confirmReset: false, savedAt: null
+      settingsTab: 'device', settings: allSettings, draft: JSON.parse(JSON.stringify(curSettings)),
+      confirmReset: false, confirmClearData: false, savedAt: null,
+
+      // Modal state
+      recordModalOpen: false, recordModalMode: 'create', recordDraft: null,
+      deviceModalOpen: false, deviceModalIsEdit: false, deviceDraft: null,
+      confirmDeleteRecord: false, deleteRecordId: null
     };
   }
   componentDidMount() {
     var self = this;
     this.vw = window.innerWidth;
-    this._onResize = function () { var w = window.innerWidth, band = function (x) { return x >= 1280 ? 2 : x >= 640 ? 1 : 0; }; if (band(w) !== band(self.vw)) { self.vw = w; self.forceUpdate(); } else { self.vw = w; } };
+    this._onResize = function () {
+      var w = window.innerWidth, band = function (x) { return x >= 1280 ? 2 : x >= 640 ? 1 : 0; };
+      if (band(w) !== band(self.vw)) { self.vw = w; self.forceUpdate(); } else { self.vw = w; }
+    };
     window.addEventListener('resize', this._onResize);
     this.forceUpdate();
   }
-  componentWillUnmount() { window.removeEventListener('resize', this._onResize); clearTimeout(this._tt); }
-  initialAlerts() {
-    var ev = function (t, text) { return { t: t, text: text }; };
-    return [
-      { id: 'A-106', kind: 'stale', severity: 'warning', title: 'Input turbidity reading stale', raised: '29 Oct 2026, 5:05 PM', day: 29, subsystem: 'Input turbidity sensor', observed: 'No reading 4:35 to 5:22 PM (47 min)', thrKey: 'freshness', next: 'Check the sensor cable and that the probe is submerged.', detail: 'The turbidity sensor stopped reporting at 4:35 PM, so test run T-013 was saved without a turbidity value. A valid reading arrived at 5:22 PM and the alert resolved itself; readings have been fresh since, up to the 10:42 AM sample on 30 Oct.', related: 'T-013', status: 'resolved',
-        events: [ev('29 Oct, 5:05 PM', 'Raised: no reading within the configured freshness window.'), ev('29 Oct, 5:22 PM', 'Auto-resolved: a valid reading arrived (2.0 NTU).')] },
-      { id: 'A-105', kind: 'tank', severity: 'warning', title: 'Tank above alert level', raised: '28 Oct 2026, 6:10 PM', day: 28, subsystem: 'Collection tank', observed: '91% (18.2 L of 20 L)', thrKey: 'tank', next: 'Reuse collected reject water for a non-potable purpose, or empty the tank.', detail: 'The measured level reached the configured alert level. 7.2 L was then reused for floor cleaning, which brought the level back below it.', status: 'resolved',
-        events: [ev('28 Oct, 6:10 PM', 'Raised: level 91% reached the configured alert level.'), ev('28 Oct, 6:20 PM', 'Acknowledged.'), ev('28 Oct, 6:40 PM', 'Auto-resolved: level fell to 55% after 7.2 L was reused.')] },
-      { id: 'A-104', kind: 'test', severity: 'info', title: 'Test recovery below baseline', raised: '28 Oct 2026, 9:40 AM', day: 28, subsystem: 'Recovery rate, test T-012', observed: '60.0% test recovery', thrKey: 'baseline', next: 'Compare input TDS and feed flow for run T-012, then resolve with your finding.', detail: 'Test T-012 recovered 60.0%, below the configured baseline, while input TDS was higher than usual (502 ppm, borewell blend). Later runs are back inside the baseline, but a test flag stays open until a person reviews it. It is a prompt to investigate, not a diagnosis of filter condition.', related: 'T-012', status: 'acknowledged',
-        events: [ev('28 Oct, 9:40 AM', 'Raised: test recovery 60.0% is below the baseline low.'), ev('28 Oct, 10:05 AM', 'Acknowledged. Awaiting review.')] },
-      { id: 'A-103', kind: 'connection', severity: 'critical', title: 'ESP32 disconnected', raised: '20 Oct 2026, 2:15 PM', day: 20, subsystem: 'Device connection', observed: 'No readings 1:45 to 2:23 PM (38 min)', thrKey: 'freshness', next: 'Check power and Wi-Fi at the unit.', detail: 'The device sent no readings for 38 minutes. No values exist for that window, and none were estimated to fill it.', status: 'resolved',
-        events: [ev('20 Oct, 2:15 PM', 'Raised: no readings within the configured freshness window.'), ev('20 Oct, 2:23 PM', 'Auto-resolved: readings resumed.')] },
-      { id: 'A-102', kind: 'tankfull', severity: 'critical', title: 'Tank full', raised: '12 Oct 2026, 7:30 PM', day: 12, subsystem: 'Collection tank', observed: '100% (20 L of 20 L)', thrKey: null, next: 'Reuse or empty collected water.', detail: 'The tank filled before it was emptied. About 1.2 L of reject water was generated but not collected while it was full.', status: 'resolved',
-        events: [ev('12 Oct, 7:30 PM', 'Raised: tank at 100%.'), ev('12 Oct, 8:05 PM', 'Acknowledged.'), ev('13 Oct, 7:50 AM', 'Auto-resolved: level fell to 73% after 5.5 L was reused.')] },
-      { id: 'A-101', kind: 'test', severity: 'info', title: 'Test recovery below baseline', raised: '12 Oct 2026, 9:10 AM', day: 12, subsystem: 'Recovery rate, test T-004', observed: '59.1% test recovery', thrKey: 'baseline', next: 'Compare input TDS and feed flow for run T-004.', detail: 'Test T-004 recovered 59.1% on a borewell blend with input TDS of 505 ppm. Reviewed and resolved; a prompt to investigate, not a diagnosis.', related: 'T-004', status: 'resolved',
-        events: [ev('12 Oct, 9:10 AM', 'Raised: test recovery 59.1% is below the baseline low.'), ev('12 Oct, 9:30 AM', 'Acknowledged.'), ev('13 Oct, 10:00 AM', 'Resolved by reviewer: higher input TDS from the borewell blend.')] }
-    ];
-  }
-  nowLabel() {
-    var t = new Date(), m = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'][t.getMonth()];
-    return t.getDate() + ' ' + m + ', ' + (t.getHours() % 12 || 12) + ':' + String(t.getMinutes()).padStart(2, '0') + (t.getHours() < 12 ? ' AM' : ' PM');
-  }
-  syncAlerts(alerts, settings) {
-    var cfg = settings['unit-01'], now = this.nowLabel();
-    var level = cfg.sensors.level === 'installed' ? 72 : null, thr = parseFloat(cfg.threshold);
-    var cond = level != null && !isNaN(thr) && level >= thr;
-    var list = alerts.map(function (a) { return Object.assign({}, a, { events: a.events.slice() }); });
-    var active = list.filter(function (a) { return a.kind === 'tank' && a.status !== 'resolved'; })[0];
-    if (cond && !active) {
-      var prev = list.filter(function (a) { return a.kind === 'tank'; })[0];
-      var nextNum = Math.max.apply(null, list.map(function (a) { return parseInt(a.id.slice(2), 10); })) + 1;
-      var cap = parseFloat(cfg.capacity), litres = cap > 0 ? ' (' + (Math.round(cap * level / 10) / 10).toFixed(1) + ' L of ' + cap + ' L)' : '';
-      list.unshift({ id: 'A-' + nextNum, kind: 'tank', severity: 'warning', title: 'Tank above alert level', raised: now, day: 30, subsystem: 'Collection tank', observed: level + '%' + litres, thrKey: 'tank',
-        next: 'Reuse collected reject water for a non-potable purpose, empty the tank, or review the alert level.', detail: 'The measured level is at or above the configured alert level. This clears automatically when the level falls below it.',
-        recurrenceOf: prev ? prev.id : null, status: 'open',
-        events: [{ t: now, text: 'Raised: level ' + level + '% is at or above the configured ' + thr + '% alert level.' + (prev ? ' Same condition as ' + prev.id + ', resolved earlier; logged as a new occurrence.' : '') }] });
-    } else if (!cond && active) {
-      active.status = 'resolved';
-      active.events.push({ t: now, text: level == null ? 'Auto-resolved: the level sensor is no longer configured.' : 'Auto-resolved: level ' + level + '% is below the configured ' + thr + '% alert level.' });
-    }
-    return list;
+  componentWillUnmount() {
+    window.removeEventListener('resize', this._onResize);
+    clearTimeout(this._tt);
   }
   defaults() {
     return {
@@ -679,51 +689,29 @@ class Component extends DCLogic {
         sensors: { inTds: 'none', inNtu: 'none', prodTds: 'none', feedFlow: 'none', rejFlow: 'none', purFlow: 'none', level: 'none', pressure: 'none' } }
     };
   }
-  data() {
-    if (this._data) return this._data;
-    var feed = [4.1,3.9,4.4,4.2,4.6,3.7,4.0,4.3,4.5,3.8,4.2,4.4,4.1,3.9,4.6,4.3,4.0,4.2,3.8,4.5,4.4,4.1,4.3,4.2,4.6,3.8,4.4,4.0,4.5,4.5];
-    var pur = [2.5,2.4,2.7,2.6,2.8,2.3,2.5,2.7,2.8,2.3,2.6,2.6,2.5,2.4,2.8,2.7,2.5,2.6,2.3,2.8,2.7,2.5,2.7,2.6,2.8,2.3,2.7,2.4,2.8,2.8];
-    var tds = [471,476,480,474,482,478,469,485,488,479,483,505,498,486,477,481,484,490,473,476,482,487,480,483,495,488,491,502,479,486];
-    var ntu = [1.8,1.9,2.0,1.7,2.2,2.1,1.9,2.0,2.3,1.8,2.0,2.6,2.4,2.1,1.9,2.0,2.2,1.8,1.9,2.1,2.0,2.2,1.9,2.0,2.2,1.9,2.0,2.4,2.0,2.1];
-    var ptds = [33,34,35,33,36,34,32,35,36,34,35,38,37,35,34,34,35,36,33,34,35,36,34,34,36,35,35,37,33,34];
-    var days = feed.map(function (f, i) {
-      var day = i + 1;
-      return { label: day + ' Oct', full: day + ' Oct 2026', feed: f, pur: pur[i], rej: Math.round((f - pur[i]) * 10) / 10, tds: tds[i], ntu: ntu[i], ptds: ptds[i] };
-    });
-    var hl = ['11:00','13:00','15:00','17:00','19:00','21:00','23:00','01:00','03:00','05:00','07:00','09:00'];
-    var hf = [0.4,0,0.6,0.9,0.5,0,0,0,0.3,0.7,0.6,0.4], hp = [0.25,0,0.37,0.55,0.31,0,0,0,0.18,0.43,0.37,0.25];
-    var ht = [478,479,481,480,482,483,483,484,485,486,486,486], hn = [2.0,2.0,2.1,null,2.0,2.0,2.1,2.0,2.0,2.1,2.1,2.1], hpt = [34,34,33,34,34,34,34,34,33,34,34,34];
-    var hours = hl.map(function (l, i) {
-      var next = hl[(i + 1) % 12], dayName = i < 7 ? '29 Oct' : '30 Oct';
-      return { label: l, full: dayName + ', ' + l + '–' + next, feed: hf[i], pur: hp[i], rej: Math.round((hf[i] - hp[i]) * 100) / 100, tds: ht[i], ntu: hn[i], ptds: hpt[i] };
-    });
-    var runs = [
-      ['T-014', 29, '10:20 AM', 'Municipal supply', 'Routine daily run.'],
-      ['T-013', 28, '5:05 PM', 'Municipal supply', 'Turbidity reading went stale during the run, so no turbidity value was recorded.'],
-      ['T-012', 27, '9:40 AM', 'Borewell blend', 'Higher input TDS on a borewell blend. Recovery was below baseline; compare flow and pressure context before drawing conclusions.'],
-      ['T-011', 26, '3:12 PM', 'Municipal supply', 'Routine daily run.'],
-      ['T-010', 25, '11:30 AM', 'Municipal supply', 'Routine daily run.'],
-      ['T-009', 24, '10:05 AM', 'Municipal supply', 'Routine daily run.'],
-      ['T-008', 23, '4:40 PM', 'Municipal supply', 'Routine daily run.'],
-      ['T-007', 20, '9:25 AM', 'Municipal supply', 'First run after the ESP32 reconnected.'],
-      ['T-006', 17, '2:10 PM', 'Municipal supply', 'Routine daily run.'],
-      ['T-005', 14, '10:45 AM', 'Municipal supply', 'Routine daily run.'],
-      ['T-004', 11, '9:10 AM', 'Borewell blend', 'Borewell blend. Recovery below baseline; the tank reached capacity the same evening.'],
-      ['T-003', 8, '11:00 AM', 'Municipal supply', 'Routine daily run.']
-    ].map(function (r) {
-      var d = days[r[1]];
-      return { id: r[0], idx: r[1], date: d.full + ', ' + r[2], cond: r[3], notes: r[4], feed: d.feed, pur: d.pur, rej: d.rej, tds: d.tds, ntu: r[0] === 'T-013' ? null : d.ntu, ptds: d.ptds };
-    });
-    var reuse = [
-      { id: 'R-3', date: '28 Oct 2026, 6:40 PM', idx: 27, vol: 7.2, use: 'Floor cleaning' },
-      { id: 'R-2', date: '21 Oct 2026, 8:15 AM', idx: 20, vol: 6.0, use: 'Garden watering' },
-      { id: 'R-1', date: '13 Oct 2026, 7:50 AM', idx: 12, vol: 5.5, use: 'Toilet flushing' }
+  initialAlerts() {
+    var ev = function (t, text) { return { t: t, text: text }; };
+    return [
+      { id: 'A-106', deviceId: 'unit-01', kind: 'stale', severity: 'warning', title: 'Input turbidity reading stale', raised: '29 Oct 2026, 5:05 PM', day: 29, subsystem: 'Input turbidity sensor', observed: 'No reading 4:35 to 5:22 PM (47 min)', thrKey: 'freshness', next: 'Check the sensor cable and that the probe is submerged.', detail: 'The turbidity sensor stopped reporting at 4:35 PM, so test run T-013 was saved without a turbidity value. A valid reading arrived at 5:22 PM and the alert resolved itself; readings have been fresh since, up to the 10:42 AM sample on 30 Oct.', related: 'T-013', status: 'resolved',
+        events: [ev('29 Oct, 5:05 PM', 'Raised: no reading within the configured freshness window.'), ev('29 Oct, 5:22 PM', 'Auto-resolved: a valid reading arrived (2.0 NTU).')] },
+      { id: 'A-105', deviceId: 'unit-01', kind: 'tank', severity: 'warning', title: 'Tank above alert level', raised: '28 Oct 2026, 6:10 PM', day: 28, subsystem: 'Collection tank', observed: '91% (18.2 L of 20 L)', thrKey: 'tank', next: 'Reuse collected reject water for a non-potable purpose, or empty the tank.', detail: 'The measured level reached the configured alert level. 7.2 L was then reused for floor cleaning, which brought the level back below it.', status: 'resolved',
+        events: [ev('28 Oct, 6:10 PM', 'Raised: level 91% reached the configured alert level.'), ev('28 Oct, 6:20 PM', 'Acknowledged.'), ev('28 Oct, 6:40 PM', 'Auto-resolved: level fell to 55% after 7.2 L was reused.')] },
+      { id: 'A-104', deviceId: 'unit-01', kind: 'test', severity: 'info', title: 'Test recovery below baseline', raised: '28 Oct 2026, 9:40 AM', day: 28, subsystem: 'Recovery rate, test T-012', observed: '60.0% test recovery', thrKey: 'baseline', next: 'Compare input TDS and feed flow for run T-012, then resolve with your finding.', detail: 'Test T-012 recovered 60.0%, below the configured baseline, while input TDS was higher than usual (502 ppm, borewell blend). Later runs are back inside the baseline, but a test flag stays open until a person reviews it. It is a prompt to investigate, not a diagnosis of filter condition.', related: 'T-012', status: 'acknowledged',
+        events: [ev('28 Oct, 9:40 AM', 'Raised: test recovery 60.0% is below the baseline low.'), ev('28 Oct, 10:05 AM', 'Acknowledged. Awaiting review.')] },
+      { id: 'A-103', deviceId: 'unit-01', kind: 'connection', severity: 'critical', title: 'ESP32 disconnected', raised: '20 Oct 2026, 2:15 PM', day: 20, subsystem: 'Device connection', observed: 'No readings 1:45 to 2:23 PM (38 min)', thrKey: 'freshness', next: 'Check power and Wi-Fi at the unit.', detail: 'The device sent no readings for 38 minutes. No values exist for that window, and none were estimated to fill it.', status: 'resolved',
+        events: [ev('20 Oct, 2:15 PM', 'Raised: no readings within the configured freshness window.'), ev('20 Oct, 2:23 PM', 'Auto-resolved: readings resumed.')] },
+      { id: 'A-102', deviceId: 'unit-01', kind: 'tankfull', severity: 'critical', title: 'Tank full', raised: '12 Oct 2026, 7:30 PM', day: 12, subsystem: 'Collection tank', observed: '100% (20 L of 20 L)', thrKey: null, next: 'Reuse or empty collected water.', detail: 'The tank filled before it was emptied. About 1.2 L of reject water was generated but not collected while it was full.', status: 'resolved',
+        events: [ev('12 Oct, 7:30 PM', 'Raised: tank at 100%.'), ev('12 Oct, 8:05 PM', 'Acknowledged.'), ev('13 Oct, 7:50 AM', 'Auto-resolved: level fell to 73% after 5.5 L was reused.')] },
+      { id: 'A-101', deviceId: 'unit-01', kind: 'test', severity: 'info', title: 'Test recovery below baseline', raised: '12 Oct 2026, 9:10 AM', day: 12, subsystem: 'Recovery rate, test T-004', observed: '59.1% test recovery', thrKey: 'baseline', next: 'Compare input TDS and feed flow for run T-004.', detail: 'Test T-004 recovered 59.1% on a borewell blend with input TDS of 505 ppm. Reviewed and resolved; a prompt to investigate, not a diagnosis.', related: 'T-004', status: 'resolved',
+        events: [ev('12 Oct, 9:10 AM', 'Raised: test recovery 59.1% is below the baseline low.'), ev('12 Oct, 9:30 AM', 'Acknowledged.'), ev('13 Oct, 10:00 AM', 'Resolved by reviewer: higher input TDS from the borewell blend.')] }
     ];
-    this._data = { days: days, hours: hours, runs: runs, reuse: reuse };
-    return this._data;
   }
-  csv(rows, cfg, rangeLong, hourly) {
-    var lines = ['# RejectWise export, ' + cfg.name + ', ' + rangeLong, '# Demo data: sample values for a prototype, not hardware measurements', '# Empty cells mean no reading was recorded; they are not zero', 'period,feed_L,purified_L,reject_generated_L,recovery_pct,input_tds_ppm,input_turbidity_NTU'];
+  nowLabel() {
+    var t = new Date(), m = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'][t.getMonth()];
+    return t.getDate() + ' ' + m + ', ' + (t.getHours() % 12 || 12) + ':' + String(t.getMinutes()).padStart(2, '0') + (t.getHours() < 12 ? ' AM' : ' PM');
+  }
+  csv(rows, cfg, rangeLong, hourly, sourceNote) {
+    var lines = ['# RejectWise export, ' + cfg.name + ', ' + rangeLong, '# ' + (sourceNote || 'Manual and Recorded Data'), '# Empty cells mean no reading was recorded; they are not zero', 'period,feed_L,purified_L,reject_generated_L,recovery_pct,input_tds_ppm,input_turbidity_NTU'];
     rows.forEach(function (r) {
       var rec = r.feed > 0 ? (r.pur / r.feed * 100).toFixed(1) : '';
       var vd = hourly ? 2 : 1;
@@ -732,33 +720,46 @@ class Component extends DCLogic {
     return lines.join('\n') + '\n';
   }
   renderVals() {
-    var self = this, s = this.state, D = this.data();
+    var self = this, s = this.state;
+    var storage = (window.RejectWiseApp && window.RejectWiseApp.storage) || {};
+    var calc = (window.RejectWiseApp && window.RejectWiseApp.calculations) || {};
+    var alertsEngine = (window.RejectWiseApp && window.RejectWiseApp.alerts) || {};
+
     var set = function (patch) { return function () { self.setState(patch); }; };
-    var cfg = s.settings[s.device], hasData = s.device === 'unit-01';
-    var sensorsOn = function (k) { return hasData && cfg.sensors[k] === 'installed'; };
+
+    var devicesList = storage.getDevices ? storage.getDevices() : [{ id: 'unit-01', name: 'RejectWise Unit 01' }];
+    var allSettings = storage.getAllSettings ? storage.getAllSettings() : s.settings;
+    var cfg = (allSettings && allSettings[s.device]) || s.settings[s.device] || this.defaults()['unit-01'];
+
+    // Retrieve active records from persistent storage
+    var activeRecords = storage.getRecords ? storage.getRecords(s.device) : [];
+    var hasData = activeRecords && activeRecords.length > 0;
+
+    var sensorsOn = function (k) { return hasData && cfg.sensors && cfg.sensors[k] === 'installed'; };
     var num = function (v, d) { var n = parseFloat(v); return isNaN(n) ? null : n; };
     var baseLo = num(cfg.baseLo), baseHi = num(cfg.baseHi), capacity = num(cfg.capacity), threshold = num(cfg.threshold);
     var cfgView = { baseLo: baseLo, baseHi: baseHi, capacity: capacity, threshold: threshold };
     var f1 = function (v) { return v == null ? '—' : (Math.round(v * 10) / 10).toFixed(1); };
 
+    // Range & aggregation
     var range = s.range;
-    var rows = range === '24h' ? D.hours : range === '30d' ? D.days : D.days.slice(23);
-    var startIdx = range === '30d' ? 0 : range === '7d' ? 23 : 29;
-    var rangeShort = { '24h': 'last 24 hours', '7d': 'last 7 days', '30d': 'last 30 days' }[range];
-    var rangeLong = { '24h': '29 Oct 11:00 to 30 Oct 11:00', '7d': '24–30 Oct 2026', '30d': '1–30 Oct 2026' }[range];
-    var labelEvery = range === '30d' ? 3 : 1;
-    var aggLabel = { '24h': '24-hour aggregate recovery', '7d': '7-day aggregate recovery', '30d': '30-day aggregate recovery' }[range];
-    var aggShort = { '24h': '24-hour aggregate', '7d': '7-day aggregate', '30d': '30-day aggregate' }[range];
-    var sum = function (k) { return rows.reduce(function (a, r) { return a + (r[k] || 0); }, 0); };
-    var tot = { feed: sum('feed'), pur: sum('pur'), rej: sum('rej') };
-    tot.rec = tot.feed > 0 ? tot.pur / tot.feed * 100 : null;
-    tot.frac = tot.feed > 0 ? tot.rej / tot.feed * 100 : null;
-    tot.diff = f1(Math.abs(tot.feed - tot.pur - tot.rej) < 0.05 ? 0 : tot.feed - tot.pur - tot.rej);
-    var collected = tot.rej - (range === '30d' ? 1.2 : 0);
-    var reuseRows = D.reuse.filter(function (r) { return r.idx >= startIdx && range !== '24h'; });
-    var reused = reuseRows.reduce(function (a, r) { return a + r.vol; }, 0);
+    var isCustomRange = range === 'custom';
+    var agg = calc.aggregateRecords
+      ? calc.aggregateRecords(activeRecords, range, cfg, s.customStart, s.customEnd, (activeRecords && activeRecords.length ? activeRecords[0].timestamp : null))
+      : { tot: { feed: 0, pur: 0, rej: 0, rec: 0, frac: 0, diff: '0.0', collected: 0, reused: 0 }, rows: [], allReuses: [], belowDays: [] };
 
-    var openCount = s.alerts.filter(function (a) { return a.status !== 'resolved'; }).length;
+    var rows = agg.rows;
+    var tot = agg.tot;
+    var rangeShort = { '24h': 'last 24 hours', '7d': 'last 7 days', '30d': 'last 30 days', 'custom': s.customStart + ' to ' + s.customEnd }[range] || range;
+    var rangeLong = { '24h': 'Last 24 hours', '7d': 'Last 7 days', '30d': 'Last 30 days', 'custom': s.customStart + ' to ' + s.customEnd }[range] || range;
+    var labelEvery = range === '30d' ? 3 : 1;
+    var aggLabel = { '24h': '24-hour aggregate recovery', '7d': '7-day aggregate recovery', '30d': '30-day aggregate recovery', 'custom': 'Period aggregate recovery' }[range] || 'Aggregate recovery';
+    var aggShort = { '24h': '24-hour aggregate', '7d': '7-day aggregate', '30d': '30-day aggregate', 'custom': 'Period aggregate' }[range] || 'Aggregate';
+
+    // Alerts
+    var AL = storage.getAlerts ? storage.getAlerts(s.device) : s.alerts;
+    var openCount = AL.filter(function (a) { return a.status !== 'resolved'; }).length;
+
     var navigate = function (id) { self.setState({ page: id, menuOpen: false }); };
     var go = function (id, extra) { return function (e) { if (e && e.preventDefault) e.preventDefault(); self.setState(Object.assign({ page: id, menuOpen: false }, extra || {})); }; };
     var toast = function (tone, text) {
@@ -768,45 +769,54 @@ class Component extends DCLogic {
     };
 
     var pages = {
-      overview: ['Overview', 'Connection, water balance, tank and quality for the selected device and period.'],
-      live: ['Live monitoring', 'Current readings from each installed sensor and its health.'],
-      quality: ['Water quality', 'Input and product-water readings over the selected period.'],
-      recovery: ['Recovery analytics', 'How feed water divides into purified and reject water, and what happens to the reject.'],
-      trends: ['Performance trends', 'Recovery against the configured baseline, with context for any change.'],
-      history: ['Test history', 'Every recorded test run. Search, filter and open a run for its details.'],
-      alerts: ['Alerts', 'What happened, where, and what to check next.'],
-      reports: ['Reports', 'A summary of the selected period, ready to export as CSV.'],
-      settings: ['Settings', 'Device details, sensor configuration and alert thresholds for the selected device.']
+      overview: ['Overview', 'Water balance, quality, tank status and test analytics for ' + cfg.name + '.'],
+      live: ['Live monitoring', 'Sensors, real-time measurements and device health status.'],
+      quality: ['Water quality', 'Input and product-water TDS, turbidity and reduction metrics.'],
+      recovery: ['Recovery analytics', 'Feed split into purified and reject streams, and non-potable reuse tracking.'],
+      trends: ['Performance trends', 'Recovery rates against configured baseline and contextual flags.'],
+      history: ['Test history', 'All recorded test runs. Add, edit, inspect or delete purifier test observations.'],
+      alerts: ['Alerts', 'Active conditions, baseline violations and threshold warnings.'],
+      reports: ['Reports', 'Export operational data, water balance and quality records as CSV.'],
+      settings: ['Settings', 'Device details, tank capacity, sensor configuration and alert thresholds.']
     };
-    var show = {}; Object.keys(pages).forEach(function (k) { show[k] = s.page === k && (hasData || k === 'settings' || k === 'alerts' || k === 'history'); });
-    if (!hasData) { show.alerts = false; show.history = false; }
+    var show = {}; Object.keys(pages).forEach(function (k) { show[k] = s.page === k; });
     var dataPage = ['overview', 'live', 'quality', 'recovery', 'trends', 'reports', 'alerts', 'history'].indexOf(s.page) >= 0;
 
+    // Performance trends
     var isBelow = function (r) { return r.feed > 0 && baseLo != null && r.pur / r.feed * 100 < baseLo; };
     var recRows = rows.map(function (r) { return { label: r.label, full: r.full, value: r.feed > 0 ? Math.round(r.pur / r.feed * 1000) / 10 : null }; });
-    var belowDays = rows.filter(isBelow);
+    var belowDays = agg.belowDays || rows.filter(isBelow);
     var flowRows = rows.filter(function (r) { return r.feed > 0; });
-    var lt = D.runs[0], ltRec = lt.pur / lt.feed * 100, ltBelow = baseLo != null && ltRec < baseLo;
+
+    var lt = activeRecords[0];
+    var ltRec = lt && lt.feed > 0 && lt.pur != null ? (lt.recoveryRate != null ? lt.recoveryRate : (lt.pur / lt.feed * 100)) : null;
+    var ltBelow = ltRec != null && baseLo != null && (ltRec < baseLo || (baseHi != null && ltRec > baseHi));
     var dayWord = range === '24h' ? 'two-hour periods' : 'days';
+
     var perf = {
-      tone: ltBelow ? 'attention' : 'normal', state: ltBelow ? 'Change detected' : 'Within baseline',
-      summary: 'Latest test recovery ' + ltRec.toFixed(1) + '% (' + lt.id + ', ' + lt.date.replace(' 2026', '') + ') · ' + aggShort + ' recovery ' + f1(tot.rec) + '%',
-      note: belowDays.length === 0 ? 'No ' + dayWord + ' below the baseline in this period.' : belowDays.length + ' of ' + flowRows.length + ' ' + dayWord + ' below the baseline (' + belowDays.map(function (r) { return r.label; }).join(', ') + '). A prompt to check, not a diagnosis.'
+      tone: ltBelow ? 'attention' : 'normal',
+      state: ltBelow ? 'Change detected' : 'Within baseline',
+      summary: lt ? ('Latest test recovery ' + (ltRec != null ? ltRec.toFixed(1) + '%' : '—') + ' (' + lt.id + ', ' + lt.date + ') · ' + aggShort + ' recovery ' + f1(tot.rec) + '%') : 'No tests recorded yet',
+      note: belowDays.length === 0 ? 'No ' + dayWord + ' outside the baseline in this period.' : belowDays.length + ' of ' + flowRows.length + ' ' + dayWord + ' outside the baseline. A prompt to check, not a diagnosis.'
     };
 
-    var tankPct = hasData && cfg.sensors.level === 'installed' ? 72 : null;
+    // Tank metrics
+    var tankPct = hasData && cfg.sensors && cfg.sensors.level === 'installed'
+      ? (lt && lt.tankPct != null ? lt.tankPct : 72)
+      : null;
     var tank = tankPct == null ? { pct: null, tone: 'offline', state: 'Not configured' }
       : threshold != null && tankPct >= threshold ? { pct: tankPct, tone: 'attention', state: 'Above alert level' } : { pct: tankPct, tone: 'normal', state: 'Below alert level' };
+
     var maxR = Math.max(tot.rej, 0.1);
     var rejectFlow = [
       { label: 'Generated', value: f1(tot.rej), w: '100%', color: 'var(--series-reject)' },
-      { label: 'Collected', value: f1(collected), w: (collected / maxR * 100).toFixed(1) + '%', color: 'var(--series-reject)' },
-      { label: 'Reused', value: f1(reused), w: (reused / maxR * 100).toFixed(1) + '%', color: 'var(--forest)' }
+      { label: 'Collected', value: f1(tot.collected), w: (tot.collected / maxR * 100).toFixed(1) + '%', color: 'var(--series-reject)' },
+      { label: 'Reused', value: f1(tot.reused), w: (tot.reused / maxR * 100).toFixed(1) + '%', color: 'var(--forest)' }
     ];
-    var notReused = collected - reused;
-    var rejectNote = (range === '30d' ? '1.2 L generated on 12 Oct was not collected while the tank was full. ' : '')
-      + (reused > 0 ? f1(Math.max(notReused, 0)) + ' L of the water collected in this period has not been logged as reused.' : 'No reuse logged in this period; none of the collected water is counted as reused.');
+    var notReused = tot.collected - tot.reused;
+    var rejectNote = (tot.reused > 0 ? f1(Math.max(notReused, 0)) + ' L of collected reject water is available in storage for non-potable reuse.' : 'No reuse logged in this period.');
 
+    // Overview ledger
     var ledger = [
       { label: 'Feed water', swatch: 'var(--series-feed)', value: f1(tot.feed), unit: 'L', color: 'var(--ink)', note: 'Measured · ' + rangeShort },
       { label: 'Purified', swatch: 'var(--series-purified)', value: f1(tot.pur), unit: 'L', color: 'var(--ink)', note: 'Measured · to the product tap' },
@@ -814,164 +824,356 @@ class Component extends DCLogic {
       { label: aggLabel, swatch: 'transparent', value: f1(tot.rec), unit: '%', color: 'var(--forest)', note: 'Calculated · total purified ÷ total feed' }
     ];
 
-    var latest = { inTds: [486, 'ppm'], inNtu: ['2.1', 'NTU'], prodTds: [34, 'ppm'], feedFlow: ['0.62', 'L/min'], rejFlow: ['0.24', 'L/min'], purFlow: [null, 'L/min'] };
+    // Latest sensor values
+    var latest = {
+      inTds: [lt && lt.tds != null ? lt.tds : 486, 'ppm'],
+      inNtu: [lt && lt.ntu != null ? lt.ntu.toFixed(1) : '2.1', 'NTU'],
+      prodTds: [lt && lt.ptds != null ? lt.ptds : 34, 'ppm'],
+      feedFlow: [lt && lt.feedFlow != null ? lt.feedFlow.toFixed(2) : '0.62', 'L/min'],
+      rejFlow: [lt && lt.rejFlow != null ? lt.rejFlow.toFixed(2) : '0.24', 'L/min'],
+      purFlow: [lt && lt.purFlow != null ? lt.purFlow.toFixed(2) : null, 'L/min']
+    };
     var sensorDefs = [['inTds', 'Input TDS', 'quality'], ['inNtu', 'Input turbidity', 'quality'], ['prodTds', 'Product-water TDS', 'quality'], ['feedFlow', 'Feed flow', 'flow'], ['rejFlow', 'Reject flow', 'flow'], ['purFlow', 'Purified flow', 'flow']];
     var sensors = sensorDefs.map(function (d) {
       var on = sensorsOn(d[0]);
-      return { label: d[1], on: on, off: !on, value: latest[d[0]][0], unit: latest[d[0]][1], kind: 'Measured', where: '10:42 AM', bg: on ? 'var(--surface)' : 'var(--canvas)' };
+      return { label: d[1], on: on, off: !on, value: latest[d[0]][0], unit: latest[d[0]][1], kind: 'Measured', where: lt ? lt.date : 'Recent sample', bg: on ? 'var(--surface)' : 'var(--canvas)' };
     });
 
-    var REQUIRED = [['feed', 'Feed volume'], ['pur', 'Purified volume'], ['rej', 'Reject volume'], ['tds', 'Input TDS'], ['ntu', 'Input turbidity']];
-    var missingOf = function (r) { return REQUIRED.filter(function (k) { return r[k[0]] == null; }).map(function (k) { return k[1]; }); };
-    var testRec = function (r) { return r.feed > 0 && r.pur != null ? r.pur / r.feed * 100 : null; };
-    var status = function (r) { var rr = testRec(r); return missingOf(r).length ? 'Incomplete' : (baseLo != null && rr != null && (rr < baseLo || (baseHi != null && rr > baseHi)) ? 'Change detected' : 'Within baseline'); };
+    // Test evaluations
+    var status = function (r) {
+      if (r.status) return r.status;
+      var evResult = calc.determineTestStatus ? calc.determineTestStatus(r, cfg, activeRecords) : { status: 'Within baseline' };
+      return evResult.status;
+    };
     var toneOf = function (st) { return st === 'Within baseline' ? 'normal' : st === 'Change detected' ? 'attention' : 'offline'; };
-    var testRow = function (r) { return { id: r.id, date: r.date, feed: r.feed.toFixed(1), pur: r.pur.toFixed(1), rej: r.rej.toFixed(1), tds: r.tds, ntu: r.ntu == null ? null : r.ntu.toFixed(1), rr: (r.pur / r.feed * 100).toFixed(1), note: status(r), cond: r.cond }; };
-    var testCols = [{ key: 'id', label: 'Test ID' }, { key: 'date', label: 'Date and time' }, { key: 'feed', label: 'Feed', unit: 'L', numeric: true }, { key: 'pur', label: 'Purified', unit: 'L', numeric: true }, { key: 'rej', label: 'Reject', unit: 'L', numeric: true }, { key: 'tds', label: 'Input TDS', unit: 'ppm', numeric: true }, { key: 'ntu', label: 'Turbidity', unit: 'NTU', numeric: true }, { key: 'rr', label: 'Test recovery', unit: '%', numeric: true }, { key: 'note', label: 'Status' }];
+
+    var testRow = function (r) {
+      return {
+        id: r.id,
+        date: r.date,
+        feed: r.feed != null ? r.feed.toFixed(1) : '—',
+        pur: r.pur != null ? r.pur.toFixed(1) : '—',
+        rej: r.rej != null ? r.rej.toFixed(1) : '—',
+        tds: r.tds != null ? r.tds : '—',
+        ntu: r.ntu != null ? r.ntu.toFixed(1) : '—',
+        rr: r.feed > 0 && r.pur != null ? (r.pur / r.feed * 100).toFixed(1) : '—',
+        note: status(r),
+        cond: r.cond || 'Manual test run',
+        source: r.source === 'demo' ? 'Demo' : (r.source === 'esp32' ? 'ESP32' : 'Manual')
+      };
+    };
+
+    var testCols = [
+      { key: 'id', label: 'Test ID' },
+      { key: 'date', label: 'Date and time' },
+      { key: 'feed', label: 'Feed', unit: 'L', numeric: true },
+      { key: 'pur', label: 'Purified', unit: 'L', numeric: true },
+      { key: 'rej', label: 'Reject', unit: 'L', numeric: true },
+      { key: 'tds', label: 'Input TDS', unit: 'ppm', numeric: true },
+      { key: 'ntu', label: 'Turbidity', unit: 'NTU', numeric: true },
+      { key: 'rr', label: 'Test recovery', unit: '%', numeric: true },
+      { key: 'note', label: 'Status' }
+    ];
+
     var openTest = function (row) { self.setState({ page: 'history', testSel: row.id, menuOpen: false }); };
 
+    // Search and filter in history
     var q = s.testQuery.trim().toLowerCase();
-    var filtered = D.runs.filter(function (r) {
+    var periodFiltered = (s.testDate && s.testDate !== 'all')
+      ? (calc.filterRecordsByPeriod ? calc.filterRecordsByPeriod(activeRecords, s.testDate, s.customStart, s.customEnd, (activeRecords && activeRecords.length ? activeRecords[0].timestamp : null)) : activeRecords)
+      : activeRecords;
+
+    var filtered = periodFiltered.filter(function (r) {
       if (s.testStatus !== 'all' && status(r) !== s.testStatus) return false;
-      if (s.testDate !== 'all') { var w = { w4: [23, 29], w3: [16, 22], w2: [9, 15], w1: [0, 8] }[s.testDate]; if (r.idx < w[0] || r.idx > w[1]) return false; }
-      if (q && (r.id + ' ' + r.notes + ' ' + r.cond + ' ' + r.date).toLowerCase().indexOf(q) < 0) return false;
+      if (q && ((r.id || '') + ' ' + (r.notes || '') + ' ' + (r.cond || '') + ' ' + (r.date || '')).toLowerCase().indexOf(q) < 0) return false;
       return true;
     });
-    var sel = D.runs.filter(function (r) { return r.id === s.testSel; })[0];
+
+    // Selected test detail pane
+    var sel = activeRecords.filter(function (r) { return r.id === s.testSel; })[0];
     var testDetail = { on: !!sel };
     if (sel) {
-      var st = status(sel), rr = sel.pur / sel.feed * 100;
-      var miss = missingOf(sel), reasons = [], reasonTitle = '', reasonBg = 'var(--canvas)';
-      if (st === 'Incomplete') {
-        reasonTitle = 'Why it is incomplete'; reasonBg = 'var(--canvas)';
-        reasons.push('Missing: ' + miss.join(', ') + '.');
-        var linked = s.alerts.filter(function (a) { return a.related === sel.id && a.kind === 'stale'; })[0];
-        if (linked) reasons.push('The sensor reading was stale during the run (alert ' + linked.id + '). The value was not estimated.');
-        reasons.push(rr != null ? 'Test recovery is still calculated because all three volumes were recorded.' : 'Test recovery cannot be calculated without feed and purified volumes.');
-      } else if (st === 'Change detected') {
-        reasonTitle = 'Why it was flagged'; reasonBg = 'var(--warning-soft)';
-        var gap = rr < baseLo ? (baseLo - rr) : (rr - baseHi);
-        reasons.push('Metric: test recovery ' + rr.toFixed(1) + '%, ' + gap.toFixed(1) + ' points ' + (rr < baseLo ? 'below the baseline low of ' + baseLo.toFixed(1) : 'above the baseline high of ' + baseHi.toFixed(1)) + '%.');
-        var others = D.runs.filter(function (o) { return o.id !== sel.id && o.idx < sel.idx && o.idx >= sel.idx - 14; }).map(function (o) { return o.tds; }).sort(function (a, b) { return a - b; });
-        if (others.length) { var med = others[Math.floor(others.length / 2)]; reasons.push('Context: input TDS ' + sel.tds + ' ppm against a median of ' + med + ' ppm for the ' + others.length + ' earlier runs in the previous 14 days (' + sel.cond.toLowerCase() + ').'); }
-        reasons.push('Recovery depends on source water, pressure, temperature and flow. Compare those before drawing conclusions.');
-      } else {
-        reasonTitle = 'Within baseline';
-        reasons.push('All required readings were recorded, and test recovery ' + rr.toFixed(1) + '% is inside ' + cfg.baseLo + '–' + cfg.baseHi + '%.');
+      var st = status(sel), rr = sel.feed > 0 && sel.pur != null ? (sel.pur / sel.feed * 100) : null;
+      var evDetail = calc.determineTestStatus ? calc.determineTestStatus(sel, cfg, activeRecords) : {};
+      var reasons = evDetail.reasons || ['Recorded test observation.'];
+      var reasonTitle = evDetail.reasonTitle || st;
+      var reasonBg = evDetail.reasonBg || (st === 'Change detected' ? 'var(--warning-soft)' : 'var(--canvas)');
+
+      var facts = [
+        { k: 'Data Source', v: sel.source === 'demo' ? 'Demo Data' : (sel.source === 'esp32' ? 'ESP32 Hardware' : 'Manual Input'), color: 'var(--ink)' },
+        { k: 'Feed volume', v: sel.feed != null ? sel.feed.toFixed(1) + ' L' : '—', color: 'var(--ink)' },
+        { k: 'Purified volume', v: sel.pur != null ? sel.pur.toFixed(1) + ' L' : '—', color: 'var(--ink)' },
+        { k: 'Reject generated', v: sel.rej != null ? sel.rej.toFixed(1) + ' L' : '—', color: 'var(--ink)' },
+        { k: 'Reject collected', v: sel.rejCollected != null ? sel.rejCollected.toFixed(1) + ' L' : '—', color: 'var(--ink)' },
+        { k: 'Reject reused', v: sel.rejReused != null ? sel.rejReused.toFixed(1) + ' L' : '0.0 L', color: 'var(--ink)' }
+      ];
+
+      if (Array.isArray(sel.reuses) && sel.reuses.length > 0) {
+        sel.reuses.forEach(function (re, idx) {
+          facts.push({
+            k: '↳ Reuse: ' + (re.use || 'General'),
+            v: (re.vol != null ? parseFloat(re.vol).toFixed(1) : '—') + ' L' + (re.date ? ' (' + re.date + ')' : ''),
+            color: 'var(--forest)'
+          });
+        });
       }
-      testDetail = { on: true, id: sel.id, date: sel.date, cond: sel.cond, status: st, tone: toneOf(st), notes: sel.notes, reasons: reasons, reasonTitle: reasonTitle, reasonBg: reasonBg, facts: [
-        { k: 'Feed', v: sel.feed.toFixed(1) + ' L', color: 'var(--ink)' }, { k: 'Purified', v: sel.pur.toFixed(1) + ' L', color: 'var(--ink)' }, { k: 'Reject', v: sel.rej.toFixed(1) + ' L', color: 'var(--ink)' },
-        { k: 'Input TDS', v: sel.tds + ' ppm', color: 'var(--ink)' }, { k: 'Input turbidity', v: sel.ntu == null ? 'Not recorded' : sel.ntu.toFixed(1) + ' NTU', color: sel.ntu == null ? 'var(--ink-secondary)' : 'var(--ink)' },
-        { k: 'Product-water TDS', v: sel.ptds + ' ppm', color: 'var(--ink)' },
-        { k: 'Test recovery (calculated)', v: rr.toFixed(1) + '%' + (baseLo != null && rr < baseLo ? ', below baseline' : ''), color: 'var(--ink)' },
-        { k: 'Reject fraction (calculated)', v: (sel.rej / sel.feed * 100).toFixed(1) + '%', color: 'var(--ink)' },
-        { k: 'Balance difference (calculated)', v: f1(Math.abs(sel.feed - sel.pur - sel.rej) < 0.05 ? 0 : sel.feed - sel.pur - sel.rej) + ' L', color: 'var(--ink)' }
-      ] };
+
+      facts.push(
+        { k: 'Input TDS', v: sel.tds != null ? sel.tds + ' ppm' : 'Not recorded', color: sel.tds != null ? 'var(--ink)' : 'var(--ink-secondary)' },
+        { k: 'Input turbidity', v: sel.ntu != null ? sel.ntu.toFixed(1) + ' NTU' : 'Not recorded', color: sel.ntu != null ? 'var(--ink)' : 'var(--ink-secondary)' },
+        { k: 'Product-water TDS', v: sel.ptds != null ? sel.ptds + ' ppm' : 'Not recorded', color: sel.ptds != null ? 'var(--ink)' : 'var(--ink-secondary)' },
+        { k: 'Test recovery (calculated)', v: rr != null ? (rr.toFixed(1) + '%' + (baseLo != null && rr < baseLo ? ', below baseline' : '')) : '—', color: 'var(--ink)' },
+        { k: 'Reject fraction (calculated)', v: (sel.feed > 0 && sel.rej != null) ? (sel.rej / sel.feed * 100).toFixed(1) + '%' : '—', color: 'var(--ink)' },
+        { k: 'Balance difference', v: (sel.feed != null && sel.pur != null && sel.rej != null) ? f1(sel.feed - sel.pur - sel.rej) + ' L' : '—', color: 'var(--ink)' }
+      );
+
+      testDetail = {
+        on: true,
+        id: sel.id,
+        date: sel.date,
+        cond: sel.cond || 'Standard test',
+        status: st,
+        tone: toneOf(st),
+        sourceKind: sel.source === 'demo' ? 'demo' : 'live',
+        sourceLabel: sel.source === 'demo' ? 'Demo Data' : (sel.source === 'esp32' ? 'ESP32 Sensor' : 'Manual Entry'),
+        notes: sel.notes || 'No additional observations recorded.',
+        reasons: reasons,
+        reasonTitle: reasonTitle,
+        reasonBg: reasonBg,
+        facts: facts
+      };
     }
 
+    // Alerts logic
     var thrText = function (a) { return a.thrKey === 'freshness' ? 'Freshness window ' + cfg.freshness + ' min (configured)' : a.thrKey === 'tank' ? cfg.threshold + '% alert level (configured)' : a.thrKey === 'baseline' ? 'Baseline ' + cfg.baseLo + '–' + cfg.baseHi + '% (configured)' : ''; };
-    var AL = s.alerts;
     var isActive = function (a) { return a.status !== 'resolved'; };
-    var autoClears = function (a) { return a.kind !== 'test'; };
-    var updateAlert = function (id, status, text) { return function () {
-      var now = self.nowLabel();
-      self.setState({ alerts: self.state.alerts.map(function (a) { return a.id !== id ? a : Object.assign({}, a, { status: status, events: a.events.concat([{ t: now, text: text }]) }); }) });
-    }; };
+    var autoClears = function (a) { return a.kind !== 'test' && a.kind !== 'manual_flag'; };
+
+    var updateAlertAction = function (id, alertStatus, text) {
+      return function () {
+        if (storage.updateAlertStatus) {
+          storage.updateAlertStatus(id, alertStatus, text);
+          self.setState({ alerts: storage.getAlerts(s.device) });
+        }
+      };
+    };
+
     var noteFor = function (a) {
-      var last = a.events[a.events.length - 1];
-      if (a.status === 'resolved') return last.t + ' · ' + last.text;
-      if (autoClears(a)) return 'Clears automatically when the condition no longer holds; it cannot be resolved by hand while it persists.' + (a.recurrenceOf ? ' New occurrence of ' + a.recurrenceOf + '.' : '');
-      return a.status === 'acknowledged' ? 'Acknowledged ' + last.t + '. Resolve after reviewing the run.' : 'Needs review. Test flags are resolved by a person.';
+      var last = a.events && a.events[a.events.length - 1];
+      if (a.status === 'resolved') return (last ? last.t + ' · ' + last.text : 'Resolved');
+      if (autoClears(a)) return 'Clears automatically when condition clears.' + (a.recurrenceOf ? ' Occurrence of ' + a.recurrenceOf + '.' : '');
+      return a.status === 'acknowledged' ? 'Acknowledged. Needs review.' : 'Active prompt to check conditions.';
     };
+
     var alertItem = function (a) {
-      return { severity: a.severity, title: a.title, time: a.raised.replace(' 2026', ''), subsystem: a.subsystem, observed: a.observed, threshold: thrText(a), status: a.status, note: noteFor(a), next: a.next,
+      return {
+        severity: a.severity, title: a.title, time: a.raised, subsystem: a.subsystem, observed: a.observed,
+        threshold: a.threshold || thrText(a), status: a.status, note: noteFor(a), next: a.next,
         open: go('alerts', { alertSel: a.id, alertTab: isActive(a) ? 'active' : 'resolved' }),
-        ack: a.status === 'open' ? updateAlert(a.id, 'acknowledged', 'Acknowledged.') : undefined,
-        resolve: isActive(a) && !autoClears(a) ? updateAlert(a.id, 'resolved', 'Resolved by reviewer.') : undefined };
+        ack: a.status === 'open' ? updateAlertAction(a.id, 'acknowledged', 'Acknowledged.') : undefined,
+        resolve: isActive(a) ? updateAlertAction(a.id, 'resolved', 'Resolved by reviewer.') : undefined
+      };
     };
+
     var activeAlerts = AL.filter(isActive), historyAlerts = AL.filter(function (a) { return !isActive(a); });
     var alertList = (s.alertTab === 'active' ? activeAlerts : s.alertTab === 'resolved' ? historyAlerts : activeAlerts.concat(historyAlerts))
       .filter(function (a) { return s.alertSev === 'all' || a.severity === s.alertSev; });
+
     var aSel = AL.filter(function (a) { return a.id === s.alertSel; })[0];
     var alertDetail = { on: false };
     if (aSel) {
       var ast = aSel.status;
-      alertDetail = { on: true, id: aSel.id, title: aSel.title, time: 'Raised ' + aSel.raised, detail: aSel.detail, sevLabel: { critical: 'Critical', warning: 'Warning', info: 'Info' }[aSel.severity],
+      alertDetail = {
+        on: true, id: aSel.id, title: aSel.title, time: 'Raised ' + aSel.raised, detail: aSel.detail,
+        sevLabel: { critical: 'Critical', warning: 'Warning', info: 'Info' }[aSel.severity],
         statusLabel: { open: 'Active', acknowledged: 'Acknowledged, still active', resolved: 'Resolved' }[ast],
-        tone: ast === 'open' ? ({ critical: 'critical', warning: 'attention', info: 'info' }[aSel.severity]) : ast === 'resolved' ? 'normal' : 'offline', icon: ast === 'acknowledged' ? 'check' : undefined,
-        facts: [{ k: 'Subsystem', v: aSel.subsystem }, { k: 'Observed', v: aSel.observed }].concat(aSel.thrKey ? [{ k: 'Threshold', v: thrText(aSel) }] : []).concat([{ k: 'Raised', v: aSel.raised }]).concat(isActive(aSel) ? [{ k: 'Next check', v: aSel.next }] : []).concat(aSel.recurrenceOf ? [{ k: 'Recurrence', v: 'New occurrence of ' + aSel.recurrenceOf }] : []),
-        events: aSel.events.slice().reverse(),
+        tone: ast === 'open' ? ({ critical: 'critical', warning: 'attention', info: 'info' }[aSel.severity]) : ast === 'resolved' ? 'normal' : 'offline',
+        icon: ast === 'acknowledged' ? 'check' : undefined,
+        facts: [{ k: 'Subsystem', v: aSel.subsystem }, { k: 'Observed', v: aSel.observed }].concat(aSel.thrKey ? [{ k: 'Threshold', v: thrText(aSel) }] : []).concat([{ k: 'Raised', v: aSel.raised }]).concat(isActive(aSel) ? [{ k: 'Next check', v: aSel.next }] : []),
+        events: aSel.events ? aSel.events.slice().reverse() : [],
         hasTest: !!aSel.related, related: aSel.related, openTest: go('history', { testSel: aSel.related }),
-        canAck: ast === 'open', ack: updateAlert(aSel.id, 'acknowledged', 'Acknowledged.'),
-        canResolve: isActive(aSel) && !autoClears(aSel), resolve: updateAlert(aSel.id, 'resolved', 'Resolved by reviewer.'),
-        autoNote: isActive(aSel) && autoClears(aSel), resolvedNote: !isActive(aSel) };
+        canAck: ast === 'open', ack: updateAlertAction(aSel.id, 'acknowledged', 'Acknowledged.'),
+        canResolve: isActive(aSel), resolve: updateAlertAction(aSel.id, 'resolved', 'Resolved by reviewer.'),
+        autoNote: isActive(aSel) && autoClears(aSel), resolvedNote: !isActive(aSel)
+      };
     }
 
-    var periodTests = D.runs.filter(function (r) { return range !== '24h' ? r.idx >= startIdx : r.idx === 29; }).map(function (r) {
-      return { id: r.id, date: r.date, tds: r.tds, ptds: sensorsOn('prodTds') ? r.ptds : null, red: sensorsOn('prodTds') ? ((r.tds - r.ptds) / r.tds * 100).toFixed(1) : null, ntu: r.ntu == null ? null : r.ntu.toFixed(1), note: r.cond };
+    // Water Quality comparisons
+    var periodTests = activeRecords.slice(0, 15).map(function (r) {
+      return {
+        id: r.id, date: r.date, tds: r.tds != null ? r.tds : '—',
+        ptds: sensorsOn('prodTds') && r.ptds != null ? r.ptds : '—',
+        red: (sensorsOn('prodTds') && r.tds != null && r.ptds != null && r.tds > 0) ? ((r.tds - r.ptds) / r.tds * 100).toFixed(1) : '—',
+        ntu: r.ntu != null ? r.ntu.toFixed(1) : '—',
+        note: r.cond || 'Normal'
+      };
     });
 
-    var draft = s.draft, err = {};
-    var dn = function (k) { return parseFloat(draft[k]); };
-    if (!String(draft.name).trim()) err.name = 'Enter a device name.';
-    if (!(dn('capacity') > 0)) err.capacity = 'Enter a capacity above 0 L.';
-    if (!(dn('threshold') >= 50 && dn('threshold') <= 100)) err.threshold = 'Use a level from 50 to 100%.';
-    if (!(dn('freshness') >= 1 && dn('freshness') <= 1440)) err.freshness = 'Use 1 to 1440 minutes.';
-    if (!(dn('baseLo') > 0 && dn('baseLo') < 100)) err.baseLo = 'Use a value between 0 and 100%.';
-    if (!(dn('baseHi') > dn('baseLo') && dn('baseHi') <= 100)) err.baseHi = 'Must be above the low value and at most 100%.';
-    var dirty = JSON.stringify(draft) !== JSON.stringify(cfg), hasErr = Object.keys(err).length > 0;
+    // Reuse log data
+    var allReuses = agg.allReuses || [];
+    var reuseRows = allReuses.map(function (r, i) {
+      return { id: r.id || ('R-' + i), date: r.date, vol: r.vol.toFixed(1), use: r.use };
+    });
+
+    // Settings Draft & Validation
+    var draft = s.draft || {};
+    var err = {};
+    if (!String(draft.name || '').trim()) err.name = 'Enter a device name.';
+    var dCap = parseFloat(draft.capacity); if (isNaN(dCap) || dCap <= 0) err.capacity = 'Enter a capacity above 0 L.';
+    var dThr = parseFloat(draft.threshold); if (isNaN(dThr) || dThr < 50 || dThr > 100) err.threshold = 'Use a level from 50 to 100%.';
+    var dBaseLo = parseFloat(draft.baseLo); if (isNaN(dBaseLo) || dBaseLo <= 0 || dBaseLo >= 100) err.baseLo = 'Use a value between 0 and 100%.';
+    var dBaseHi = parseFloat(draft.baseHi); if (isNaN(dBaseHi) || dBaseHi <= dBaseLo || dBaseHi > 100) err.baseHi = 'Must be above low baseline and at most 100%.';
+
+    var dirty = JSON.stringify(draft) !== JSON.stringify(cfg);
+    var hasErr = Object.keys(err).length > 0;
     var setDraft = function (k) { return function (e) { var n = Object.assign({}, self.state.draft); n[k] = e && e.target ? e.target.value : e; self.setState({ draft: n }); }; };
     var sensorLabels = [['inTds', 'Input TDS sensor'], ['inNtu', 'Input turbidity sensor'], ['prodTds', 'Product-water TDS sensor'], ['feedFlow', 'Feed flow sensor'], ['rejFlow', 'Reject flow sensor'], ['purFlow', 'Purified flow sensor'], ['level', 'Tank level sensor'], ['pressure', 'Pressure sensor']];
 
-    var deviceName = cfg.name;
-    var liveSensor = function (k, label, icon, note) {
-      var on = sensorsOn(k), v = latest[k] || [null, ''];
-      return { label: label, icon: icon, value: on ? v[0] : null, unit: v[1], state: on ? 'ok' : 'unavailable', ts: on ? '30 Oct, 10:42 AM' : '', dl: on ? 'demo' : undefined, note: on ? (note || 'Last sample, not live') : 'Not installed on this device' };
+    // Handlers for Add/Edit Record Modal
+    var openAddRecord = function () {
+      self.setState({
+        recordModalOpen: true, recordModalMode: 'create',
+        recordDraft: { deviceId: s.device, tankCapacity: cfg.capacity, tankVolume: (tankPct ? (tankPct / 100 * (capacity || 20)).toFixed(1) : '14.4') }
+      });
     };
-    var healthRows = sensorLabels.map(function (l) {
-      var on = sensorsOn(l[0]);
-      return { id: l[0], sensor: l[1].replace(' sensor', ''), state: on ? (l[0] === 'inNtu' ? 'Online · stale once on 29 Oct' : 'Online') : 'Not configured', last: on ? '30 Oct, 10:42 AM' : null, origin: on ? 'Demo data' : null };
-    });
+    var closeRecordModal = function () { self.setState({ recordModalOpen: false, recordDraft: null }); };
+
+    var handleSaveRecord = function (payload) {
+      if (!storage.createRecord) return;
+      var isEdit = s.recordModalMode === 'edit';
+      if (isEdit) {
+        storage.updateRecord(payload.id, payload);
+      } else {
+        storage.createRecord(payload);
+      }
+
+      // Re-evaluate alerts
+      var currentTank = { pct: payload.tankPct, vol: payload.tankVolume };
+      var updatedAlerts = alertsEngine.evaluateAlerts ? alertsEngine.evaluateAlerts(storage.getAlerts(s.device), s.device, cfg, currentTank, payload) : storage.getAlerts(s.device);
+      if (storage.saveAlerts) storage.saveAlerts(updatedAlerts);
+
+      toast('success', (isEdit ? 'Updated test record ' : 'Added new test record ') + payload.id + ' (' + payload.status + ').');
+      self.setState({
+        recordModalOpen: false, recordDraft: null, alerts: updatedAlerts,
+        testSel: payload.id, page: 'history'
+      });
+    };
+
+    var editSelectedTest = function () {
+      if (!sel) return;
+      self.setState({ recordModalOpen: true, recordModalMode: 'edit', recordDraft: sel });
+    };
+
+    var askDeleteTest = function () {
+      if (!sel) return;
+      self.setState({ confirmDeleteRecord: true, deleteRecordId: sel.id });
+    };
+    var cancelDeleteTest = set({ confirmDeleteRecord: false, deleteRecordId: null });
+    var doDeleteTest = function () {
+      var id = self.state.deleteRecordId;
+      if (storage.deleteRecord) storage.deleteRecord(id);
+      var currentRecords = storage.getRecords(s.device);
+      var updatedAlerts = alertsEngine.evaluateAlerts ? alertsEngine.evaluateAlerts(storage.getAlerts(s.device), s.device, cfg, null, currentRecords[0]) : storage.getAlerts(s.device);
+      if (storage.saveAlerts) storage.saveAlerts(updatedAlerts);
+      toast('info', 'Deleted test run ' + id + '. Recalculated dashboard metrics.');
+      self.setState({ confirmDeleteRecord: false, deleteRecordId: null, testSel: null, alerts: updatedAlerts });
+    };
+
+    // Device modal handlers
+    var openAddDevice = function () {
+      self.setState({ deviceModalOpen: true, deviceModalIsEdit: false, deviceDraft: null });
+    };
+    var closeDeviceModal = set({ deviceModalOpen: false, deviceDraft: null });
+    var handleSaveDevice = function (devPayload) {
+      if (storage.saveDevice) storage.saveDevice(devPayload);
+      var allDevSettings = storage.getAllSettings();
+      self.setState({
+        deviceModalOpen: false, device: devPayload.id, settings: allDevSettings,
+        draft: JSON.parse(JSON.stringify(allDevSettings[devPayload.id]))
+      });
+      toast('success', 'Configured purifier unit ' + devPayload.name + '.');
+    };
+
+    // Clear and reset data handlers
+    var askClearAllData = set({ confirmClearData: true });
+    var cancelClearData = set({ confirmClearData: false });
+    var doClearAllData = function () {
+      if (storage.clearAllData) storage.clearAllData();
+      self.setState({ confirmClearData: false, testSel: null, alerts: [] });
+      toast('info', 'All test runs cleared. Ready for pure manual entry.');
+    };
 
     var refresh = function () {
       var t = new Date(), hh = t.getHours(), mm = String(t.getMinutes()).padStart(2, '0');
       var label = (hh % 12 || 12) + ':' + mm + (hh < 12 ? ' AM' : ' PM');
-      self.setState({ checkedAt: label, alerts: self.syncAlerts(self.state.alerts, self.state.settings) });
-      toast('info', hasData ? 'Demo mode: no live data source is connected, so readings were not updated. Alert conditions were re-checked.' : 'No device connected for ' + deviceName + '.');
+      var updatedAlerts = alertsEngine.evaluateAlerts ? alertsEngine.evaluateAlerts(storage.getAlerts(s.device), s.device, cfg, null, activeRecords[0]) : storage.getAlerts(s.device);
+      self.setState({ checkedAt: label, alerts: updatedAlerts });
+      toast('info', hasData ? 'Dashboard re-checked. Evaluated active alerts against current baselines.' : 'No data recorded for ' + cfg.name + '.');
     };
+
     var exportCsv = function () {
       if (!hasData) return;
-      var name = 'rejectwise-' + s.device + '-' + range + '-demo.csv';
+      var name = 'rejectwise-' + s.device + '-' + range + '.csv';
+      var sourceTag = activeRecords.some(function (r) { return r.source === 'manual'; }) ? 'Manual observations export' : 'Demo data export';
       try {
-        var blob = new Blob([self.csv(rows, cfg, rangeLong, range === '24h')], { type: 'text/csv;charset=utf-8' });
+        var blob = new Blob([self.csv(rows, cfg, rangeLong, range === '24h', sourceTag)], { type: 'text/csv;charset=utf-8' });
         var url = URL.createObjectURL(blob), link = document.createElement('a');
         link.href = url; link.download = name; document.body.appendChild(link); link.click(); link.remove();
         setTimeout(function () { URL.revokeObjectURL(url); }, 2000);
-        toast('success', 'Downloaded ' + name + ' (' + rows.length + ' rows, Demo data).');
+        toast('success', 'Downloaded ' + name + ' (' + rows.length + ' rows).');
       } catch (e) { toast('danger', 'The CSV could not be downloaded in this view.'); }
     };
+
+    var hasManual = activeRecords.some(function (r) { return r.source === 'manual'; });
+    var activeDataBadgeKind = hasManual ? 'recorded' : 'demo';
+    var activeDataBadgeLabel = hasManual ? 'Manual Entry' : 'Demo Data';
 
     return {
       yes: true, page: s.page, show: show, hasData: hasData, noData: !hasData, showEmpty: !hasData && dataPage,
       menuClass: s.menuOpen ? 'is-open' : '', openMenu: set({ menuOpen: true }), closeMenu: set({ menuOpen: false }),
-      navigate: function (id) { if (id === 'settings') self.setState({ page: id, menuOpen: false, draft: JSON.parse(JSON.stringify(self.state.settings[self.state.device])) }); else navigate(id); },
+      navigate: function (id) {
+        if (id === 'settings') self.setState({ page: id, menuOpen: false, draft: JSON.parse(JSON.stringify(self.state.settings[self.state.device])) });
+        else navigate(id);
+      },
       goAlerts: go('alerts'), goRecovery: go('recovery'), goLive: go('live'), goTrends: go('trends'), goHistory: go('history', { testSel: null }),
       goSensors: go('settings', { settingsTab: 'sensors', draft: JSON.parse(JSON.stringify(cfg)) }),
-      crumbs: [deviceName, pages[s.page][0]], pageTitle: pages[s.page][0], pageDesc: pages[s.page][1],
+      crumbs: [cfg.name, pages[s.page][0]], pageTitle: pages[s.page][0], pageDesc: pages[s.page][1],
       navCounts: openCount ? { alerts: openCount } : {}, openCount: openCount,
-      openLabel: openCount + ' active · ' + (s.alerts.length - openCount) + ' resolved',
-      sideConn: hasData ? 'demo' : 'disconnected', deviceName: deviceName,
-      connDot: hasData ? 'var(--ink-secondary)' : 'var(--danger)',
-      connLabel: hasData ? 'Demo mode · ESP32 not connected' : 'Not set up · no device connected',
-      connDetail: hasData ? 'Last sample 30 Oct 2026, 10:42 AM' : 'No readings received',
-      checkedLabel: s.checkedAt ? 'Checked ' + s.checkedAt + ', no live source' : '',
-      deviceOptions: [{ value: 'unit-01', label: s.settings['unit-01'].name }, { value: 'unit-02', label: s.settings['unit-02'].name + ' (not set up)' }],
+      openLabel: openCount + ' active · ' + (AL.length - openCount) + ' resolved',
+      sideConn: hasData ? (hasManual ? 'connected' : 'demo') : 'disconnected',
+      deviceName: cfg.name,
+      controllerLabel: 'Manual Entry · Ready for ESP32',
+      connDot: hasData ? (hasManual ? 'var(--forest)' : 'var(--ink-secondary)') : 'var(--danger)',
+      connLabel: hasData ? (hasManual ? 'Manual entry active · Ready for ESP32' : 'Demo mode · ESP32 not connected') : 'Not set up · no readings recorded',
+      connDetail: lt ? 'Last observation: ' + lt.date : 'No readings received',
+      checkedLabel: s.checkedAt ? 'Checked ' + s.checkedAt : '',
+      activeDataBadgeKind: activeDataBadgeKind,
+      activeDataBadgeLabel: activeDataBadgeLabel,
+      deviceOptions: devicesList.map(function (d) { return { value: d.id, label: d.name + (d.id === s.device ? ' (Active)' : '') }; }),
       device: s.device,
-      changeDevice: function (e) { var v = e.target.value; self.setState({ device: v, draft: JSON.parse(JSON.stringify(self.state.settings[v])), testSel: null, checkedAt: null }); },
-      rangeOptions: [{ value: '24h', label: 'Last 24 hours' }, { value: '7d', label: 'Last 7 days' }, { value: '30d', label: 'Last 30 days' }],
-      range: range, changeRange: function (e) { self.setState({ range: e.target.value }); },
+      changeDevice: function (e) {
+        var v = e.target.value;
+        if (storage.setActiveDeviceId) storage.setActiveDeviceId(v);
+        var devSettings = storage.getSettings(v);
+        self.setState({ device: v, draft: JSON.parse(JSON.stringify(devSettings)), testSel: null, checkedAt: null, alerts: storage.getAlerts(v) });
+      },
+      devicesList: devicesList,
+      rangeOptions: [
+        { value: '24h', label: 'Last 24 hours' },
+        { value: '7d', label: 'Last 7 days' },
+        { value: '30d', label: 'Last 30 days' },
+        { value: 'custom', label: 'Custom date range' }
+      ],
+      range: range,
+      isCustomRange: isCustomRange,
+      customStart: s.customStart,
+      customEnd: s.customEnd,
+      setCustomStart: function (e) { self.setState({ customStart: e.target.value }); },
+      setCustomEnd: function (e) { self.setState({ customEnd: e.target.value }); },
+      changeRange: function (e) { self.setState({ range: e.target.value }); },
       showRange: ['overview', 'quality', 'recovery', 'trends', 'reports'].indexOf(s.page) >= 0,
-      showRefresh: ['overview', 'live'].indexOf(s.page) >= 0, showExport: ['overview', 'reports'].indexOf(s.page) >= 0,
+      showRefresh: ['overview', 'live'].indexOf(s.page) >= 0,
+      showExport: ['overview', 'reports'].indexOf(s.page) >= 0,
       exportVariant: s.page === 'reports' ? 'primary' : 'secondary',
       refresh: refresh, exportCsv: exportCsv,
       toastOn: !!s.toast, toast: s.toast || { tone: 'info', text: '' }, closeToast: set({ toast: null }),
@@ -986,17 +1188,35 @@ class Component extends DCLogic {
         : [{ label: 'Recovery rate', color: 'var(--series-purified)' }, { label: 'Below baseline', color: 'var(--warning)' }, { label: 'Baseline range', color: 'var(--forest-soft)' }],
       tot: tot, ledger: ledger, tank: tank, rejectFlow: rejectFlow, rejectNote: rejectNote, sensors: sensors, perf: perf, recRows: recRows,
       recentAlerts: activeAlerts.concat(historyAlerts).slice(0, 3).map(alertItem),
-      testCols: testCols, latestTests: D.runs.slice(0, 5).map(testRow), openTest: openTest,
-      liveNote: hasData ? 'No live readings are arriving. Values below are the last Demo data sample from 30 Oct 2026, 10:42 AM and will not change until the device connects. Use Refresh to check again.' : '',
+      testCols: testCols, latestTests: activeRecords.slice(0, 5).map(testRow), openTest: openTest,
+      lastSampleLabel: lt ? 'Last reading: ' + lt.date : 'No readings',
+      liveAlertTitle: hasManual ? 'Manual entry operational mode' : 'ESP32 not connected',
+      liveNote: hasManual
+        ? 'Manual readings are active and stored locally. Hardware sensors will automatically stream values when ESP32 is integrated.'
+        : 'No live hardware source connected. Values shown are stored observations.',
       liveGroups: [
-        { title: 'Water quality', items: [liveSensor('inTds', 'Input TDS', 'quality'), liveSensor('inNtu', 'Input turbidity', 'quality'), liveSensor('prodTds', 'Product-water TDS', 'quality', 'Optional sensor')] },
-        { title: 'Flow', items: [liveSensor('feedFlow', 'Feed flow', 'flow'), liveSensor('rejFlow', 'Reject flow', 'flow'), liveSensor('purFlow', 'Purified flow', 'flow')] }
+        { title: 'Water quality', items: [
+            { label: 'Input TDS', icon: 'quality', value: latest.inTds[0], unit: latest.inTds[1], state: sensorsOn('inTds') ? 'ok' : 'unavailable', ts: lt ? lt.date : '', dl: activeDataBadgeKind, note: 'Feed water' },
+            { label: 'Input turbidity', icon: 'quality', value: latest.inNtu[0], unit: latest.inNtu[1], state: sensorsOn('inNtu') ? 'ok' : 'unavailable', ts: lt ? lt.date : '', dl: activeDataBadgeKind, note: 'Feed water' },
+            { label: 'Product-water TDS', icon: 'quality', value: latest.prodTds[0], unit: latest.prodTds[1], state: sensorsOn('prodTds') ? 'ok' : 'unavailable', ts: lt ? lt.date : '', dl: activeDataBadgeKind, note: 'Purified line' }
+          ]
+        },
+        { title: 'Flow', items: [
+            { label: 'Feed flow', icon: 'flow', value: latest.feedFlow[0], unit: latest.feedFlow[1], state: sensorsOn('feedFlow') ? 'ok' : 'unavailable', ts: lt ? lt.date : '', dl: activeDataBadgeKind, note: 'Inlet line' },
+            { label: 'Reject flow', icon: 'flow', value: latest.rejFlow[0], unit: latest.rejFlow[1], state: sensorsOn('rejFlow') ? 'ok' : 'unavailable', ts: lt ? lt.date : '', dl: activeDataBadgeKind, note: 'Drain stream' },
+            { label: 'Purified flow', icon: 'flow', value: latest.purFlow[0], unit: latest.purFlow[1], state: sensorsOn('purFlow') ? 'ok' : 'unavailable', ts: lt ? lt.date : '', dl: activeDataBadgeKind, note: 'Product stream' }
+          ]
+        }
       ],
-      healthCols: [{ key: 'sensor', label: 'Sensor' }, { key: 'state', label: 'Status' }, { key: 'last', label: 'Last reading' }, { key: 'origin', label: 'Origin' }], healthRows: healthRows,
+      healthCols: [{ key: 'sensor', label: 'Sensor' }, { key: 'state', label: 'Status' }, { key: 'last', label: 'Last reading' }, { key: 'origin', label: 'Origin' }],
+      healthRows: sensorLabels.map(function (l) {
+        var on = sensorsOn(l[0]);
+        return { id: l[0], sensor: l[1].replace(' sensor', ''), state: on ? 'Operational' : 'Not configured', last: on && lt ? lt.date : '—', origin: on ? activeDataBadgeLabel : '—' };
+      }),
       qualityCharts: [
-        { title: 'Input TDS', series: 'Input TDS', unit: 'ppm', stat: 'Range ' + Math.min.apply(null, rows.map(function (r) { return r.tds; })) + '–' + Math.max.apply(null, rows.map(function (r) { return r.tds; })) + ' ppm', desc: 'Dissolved solids in the feed water.', rows: rows.map(function (r) { return { label: r.label, full: r.full, value: r.tds }; }), min: 400, max: 520, step: 40, decimals: 0, color: 'var(--series-feed)', on: sensorsOn('inTds'), off: !sensorsOn('inTds') },
-        { title: 'Input turbidity', series: 'Input turbidity', unit: 'NTU', stat: range === '24h' ? '1 gap, 17:00 bucket' : 'No gaps in daily averages', desc: 'Cloudiness from suspended particles. Gaps mean no reading was recorded.', rows: rows.map(function (r) { return { label: r.label, full: r.full, value: r.ntu }; }), min: 0, max: 3, step: 1, decimals: 1, color: 'var(--series-feed)', on: sensorsOn('inNtu'), off: !sensorsOn('inNtu') },
-        { title: 'Product-water TDS', series: 'Product-water TDS', unit: 'ppm', stat: 'Optional sensor', desc: 'Dissolved solids after purification.', rows: rows.map(function (r) { return { label: r.label, full: r.full, value: r.ptds }; }), min: 0, max: 50, step: 10, decimals: 0, color: 'var(--series-purified)', on: sensorsOn('prodTds'), off: !sensorsOn('prodTds') },
+        { title: 'Input TDS', series: 'Input TDS', unit: 'ppm', stat: rows.length ? ('Range ' + Math.min.apply(null, rows.map(function (r) { return r.tds || 450; })) + '–' + Math.max.apply(null, rows.map(function (r) { return r.tds || 500; })) + ' ppm') : 'No data', desc: 'Dissolved solids in the feed water.', rows: rows.map(function (r) { return { label: r.label, full: r.full, value: r.tds }; }), min: 400, max: 520, step: 40, decimals: 0, color: 'var(--series-feed)', on: sensorsOn('inTds'), off: !sensorsOn('inTds') },
+        { title: 'Input turbidity', series: 'Input turbidity', unit: 'NTU', stat: 'Observed samples', desc: 'Cloudiness from suspended particles.', rows: rows.map(function (r) { return { label: r.label, full: r.full, value: r.ntu }; }), min: 0, max: 4, step: 1, decimals: 1, color: 'var(--series-feed)', on: sensorsOn('inNtu'), off: !sensorsOn('inNtu') },
+        { title: 'Product-water TDS', series: 'Product-water TDS', unit: 'ppm', stat: 'Product stream', desc: 'Dissolved solids after purification.', rows: rows.map(function (r) { return { label: r.label, full: r.full, value: r.ptds }; }), min: 0, max: 50, step: 10, decimals: 0, color: 'var(--series-purified)', on: sensorsOn('prodTds'), off: !sensorsOn('prodTds') },
         { title: 'Product-water turbidity', series: '', unit: 'NTU', stat: 'Not installed', desc: 'No turbidity sensor on the product line.', rows: [], min: 0, max: 1, step: 1, decimals: 0, color: '', on: false, off: true }
       ],
       qualityCols: [{ key: 'id', label: 'Test ID' }, { key: 'date', label: 'Date and time' }, { key: 'tds', label: 'Input TDS', unit: 'ppm', numeric: true }, { key: 'ptds', label: 'Product TDS', unit: 'ppm', numeric: true }, { key: 'red', label: 'TDS reduction', unit: '%', numeric: true }, { key: 'ntu', label: 'Input turbidity', unit: 'NTU', numeric: true }, { key: 'note', label: 'Condition' }],
@@ -1005,30 +1225,30 @@ class Component extends DCLogic {
         { label: 'Feed', value: f1(tot.feed) + ' L', note: 'Measured', color: 'var(--ink)' },
         { label: 'Purified', value: f1(tot.pur) + ' L', note: 'Measured', color: 'var(--ink)' },
         { label: 'Reject generated', value: f1(tot.rej) + ' L', note: 'Measured', color: 'var(--ink)' },
-        { label: 'Reject collected', value: f1(collected) + ' L', note: 'Measured at tank', color: 'var(--ink)' },
-        { label: 'Reject reused', value: f1(reused) + ' L', note: 'Logged', color: 'var(--ink)' },
+        { label: 'Reject collected', value: f1(tot.collected) + ' L', note: 'Measured at tank', color: 'var(--ink)' },
+        { label: 'Reject reused', value: f1(tot.reused) + ' L', note: 'Logged', color: 'var(--ink)' },
         { label: aggLabel, value: f1(tot.rec) + '%', note: 'Total purified ÷ total feed', color: 'var(--forest)' },
         { label: 'Reject fraction', value: f1(tot.frac) + '%', note: 'Reject generated ÷ feed', color: 'var(--ink)' },
         { label: 'Balance difference', value: tot.diff + ' L', note: 'Feed − purified − reject generated', color: 'var(--ink)' }
       ],
-      reuseLog: D.reuse.map(function (r) { return { use: r.use, vol: r.vol.toFixed(1), date: r.date.replace(' 2026', ''), inRange: range !== '24h' && r.idx >= startIdx ? 'In period' : 'Before period' }; }),
+      reuseLog: allReuses.slice(0, 5).map(function (r) { return { use: r.use, vol: r.vol.toFixed(1), date: r.date, inRange: 'In period' }; }),
       reuseCols: [{ key: 'date', label: 'Date and time' }, { key: 'vol', label: 'Volume', unit: 'L', numeric: true }, { key: 'use', label: 'Non-potable purpose' }],
-      reuseRows: reuseRows.map(function (r) { return { id: r.id, date: r.date, vol: r.vol.toFixed(1), use: r.use }; }),
+      reuseRows: reuseRows,
       tdsRows: rows.map(function (r) { return { label: r.label, full: r.full, value: r.tds }; }),
       flagCols: [{ key: 'day', label: 'Period' }, { key: 'rr', label: 'Daily recovery', unit: '%', numeric: true }, { key: 'tds', label: 'Input TDS', unit: 'ppm', numeric: true }, { key: 'check', label: 'Suggested check' }],
-      flagRows: belowDays.map(function (r) { return { id: r.full, day: r.full, rr: (r.pur / r.feed * 100).toFixed(1), tds: r.tds, check: r.tds >= 500 ? 'Compare source water' : 'Check flow, calibration' }; }),
+      flagRows: belowDays.map(function (r) { return { id: r.full, day: r.full, rr: r.feed > 0 ? (r.pur / r.feed * 100).toFixed(1) : '—', tds: r.tds || '—', check: (r.tds && r.tds >= 500) ? 'Compare source water' : 'Check flow, calibration' }; }),
       testQuery: s.testQuery, changeQuery: function (e) { self.setState({ testQuery: e.target.value }); },
       statusOptions: [{ value: 'all', label: 'All statuses' }, { value: 'Within baseline', label: 'Within baseline' }, { value: 'Change detected', label: 'Change detected' }, { value: 'Incomplete', label: 'Incomplete' }],
       testStatus: s.testStatus, changeStatus: function (e) { self.setState({ testStatus: e.target.value }); },
-      dateOptions: [{ value: 'all', label: 'All dates' }, { value: 'w4', label: '24–30 Oct' }, { value: 'w3', label: '17–23 Oct' }, { value: 'w2', label: '10–16 Oct' }, { value: 'w1', label: '1–9 Oct' }],
+      dateOptions: [{ value: 'all', label: 'All dates' }, { value: '24h', label: 'Last 24 hours' }, { value: '7d', label: 'Last 7 days' }, { value: '30d', label: 'Last 30 days' }],
       testDate: s.testDate, changeDate: function (e) { self.setState({ testDate: e.target.value }); },
       statusDefs: [
-        { tone: 'normal', label: 'Within baseline', text: 'All required readings were recorded and test recovery is inside the configured baseline.' },
-        { tone: 'offline', label: 'Incomplete', text: 'At least one required reading is missing. Values that were recorded are still shown; missing ones are never filled in.' },
-        { tone: 'attention', label: 'Change detected', text: 'Test recovery is outside the configured baseline. A prompt to investigate, not a diagnosis of filter condition.' }
+        { tone: 'normal', label: 'Within baseline', text: 'All required readings recorded and recovery inside the configured baseline.' },
+        { tone: 'offline', label: 'Incomplete', text: 'At least one required reading is missing. Recorded values are preserved.' },
+        { tone: 'attention', label: 'Change detected', text: 'Test recovery is outside the baseline. Prompt to investigate conditions.' }
       ],
-      filtersOn: !!(q || s.testStatus !== 'all' || s.testDate !== 'all'), clearFilters: set({ testQuery: '', testStatus: 'all', testDate: 'all' }),
-      historyCount: filtered.length + ' of ' + D.runs.length + ' runs',
+      filtersOn: !!(q || s.testStatus !== 'all' || (s.testDate && s.testDate !== 'all')), clearFilters: set({ testQuery: '', testStatus: 'all', testDate: 'all' }),
+      historyCount: filtered.length + ' of ' + activeRecords.length + ' runs',
       historyCols: sel ? [testCols[0], testCols[1], testCols[2], testCols[7], testCols[8]] : testCols,
       testMaster: sel ? 'master' : 'solo', alertMaster: aSel ? 'master' : 'solo',
       filteredTests: filtered.map(testRow), testSel: s.testSel, testDetail: testDetail, closeTest: set({ testSel: null }),
@@ -1038,34 +1258,72 @@ class Component extends DCLogic {
       alertSev: s.alertSev, changeSev: function (e) { self.setState({ alertSev: e.target.value }); },
       alertList: alertList.map(alertItem), alertsEmpty: alertList.length === 0,
       alertsEmptyTitle: s.alertTab === 'active' ? 'No active alerts' : 'No alerts here',
-      alertsEmptyText: s.alertTab === 'active' ? 'Every recorded condition has cleared. Resolved alerts stay under Resolved.' : 'Nothing matches this status and severity.', alertDetail: alertDetail, closeAlert: set({ alertSel: null }),
+      alertsEmptyText: s.alertTab === 'active' ? 'Every recorded condition has cleared.' : 'Nothing matches this status and severity.',
+      alertDetail: alertDetail, closeAlert: set({ alertSel: null }),
       reportFacts: [
-        { label: 'Test runs', value: String(periodTests.length), note: 'Recorded in the period' },
-        { label: 'Days below baseline', value: String(belowDays.length), note: 'Flags to investigate, not failures' },
-        { label: 'Alerts raised', value: String(AL.filter(function (a) { return range === '30d' || (range === '7d' ? a.day >= 24 : a.day >= 29); }).length), note: 'Of any severity, including resolved' }
+        { label: 'Test runs', value: String(activeRecords.length), note: 'Total recorded for device' },
+        { label: 'Days outside baseline', value: String(belowDays.length), note: 'Flags to investigate, not failures' },
+        { label: 'Alerts raised', value: String(AL.length), note: 'Of any severity, including resolved' }
       ],
       reportCols: [{ key: 'full', label: 'Period' }, { key: 'feed', label: 'Feed', unit: 'L', numeric: true }, { key: 'pur', label: 'Purified', unit: 'L', numeric: true }, { key: 'rej', label: 'Reject', unit: 'L', numeric: true }, { key: 'rr', label: 'Period recovery', unit: '%', numeric: true }, { key: 'tds', label: 'Input TDS', unit: 'ppm', numeric: true }, { key: 'ntu', label: 'Turbidity', unit: 'NTU', numeric: true }],
       reportRows: rows.map(function (r) { var vd = range === '24h' ? 2 : 1; return { id: r.full, full: r.full, feed: r.feed.toFixed(vd), pur: r.pur.toFixed(vd), rej: r.rej.toFixed(vd), rr: r.feed > 0 ? (r.pur / r.feed * 100).toFixed(1) : null, tds: r.tds, ntu: r.ntu == null ? null : r.ntu.toFixed(1) }; }),
-      settingsTabs: [{ id: 'device', label: 'Device' }, { id: 'sensors', label: 'Sensors' }, { id: 'thresholds', label: 'Thresholds' }, { id: 'privacy', label: 'Data and privacy' }],
+      settingsTabs: [{ id: 'device', label: 'Device' }, { id: 'sensors', label: 'Sensors' }, { id: 'thresholds', label: 'Thresholds' }, { id: 'privacy', label: 'Data and storage' }],
       settingsTab: s.settingsTab, changeSettingsTab: function (id) { self.setState({ settingsTab: id }); },
       st: { device: s.settingsTab === 'device', sensors: s.settingsTab === 'sensors', thresholds: s.settingsTab === 'thresholds', privacy: s.settingsTab === 'privacy', editable: s.settingsTab !== 'privacy' },
       draft: draft, err: err,
       setName: setDraft('name'), setLocation: setDraft('location'), setCapacity: setDraft('capacity'), setThreshold: setDraft('threshold'), setFreshness: setDraft('freshness'), setBaseLo: setDraft('baseLo'), setBaseHi: setDraft('baseHi'),
       sensorStateOptions: [{ value: 'installed', label: 'Installed' }, { value: 'none', label: 'Not configured' }],
       sensorRows: sensorLabels.map(function (l) {
-        return { label: l[1], aria: l[1] + ' status', value: draft.sensors[l[0]], cal: draft.sensors[l[0]] === 'installed' ? (l[0] === 'level' || l[0].indexOf('Flow') > 0 ? 'Calibrated 12 Oct 2026 · Demo data' : 'Calibrated 12 Oct 2026 · Demo data') : 'No calibration on record',
-          change: function (e) { var n = JSON.parse(JSON.stringify(self.state.draft)); n.sensors[l[0]] = e.target.value; self.setState({ draft: n }); } };
+        return {
+          label: l[1], aria: l[1] + ' status', value: draft.sensors ? draft.sensors[l[0]] : 'none',
+          cal: draft.sensors && draft.sensors[l[0]] === 'installed' ? 'Operational · Configured' : 'No calibration on record',
+          change: function (e) {
+            var n = JSON.parse(JSON.stringify(self.state.draft));
+            if (!n.sensors) n.sensors = {};
+            n.sensors[l[0]] = e.target.value;
+            self.setState({ draft: n });
+          }
+        };
       }),
       saveDisabled: !dirty || hasErr, notDirty: !dirty,
-      saveNote: hasErr && dirty ? 'Fix the highlighted fields to save.' : dirty ? 'Unsaved changes for ' + deviceName + '.' : (s.savedAt ? 'Saved at ' + s.savedAt + ' for this session.' : 'No unsaved changes.'),
+      saveNote: hasErr && dirty ? 'Fix highlighted fields to save.' : dirty ? 'Unsaved changes for ' + cfg.name + '.' : (s.savedAt ? 'Saved at ' + s.savedAt + '.' : 'No unsaved changes.'),
       saveSettings: function () {
-        var n = JSON.parse(JSON.stringify(self.state.settings)); n[self.state.device] = JSON.parse(JSON.stringify(self.state.draft));
-        var t = new Date(); self.setState({ settings: n, alerts: self.syncAlerts(self.state.alerts, n), savedAt: (t.getHours() % 12 || 12) + ':' + String(t.getMinutes()).padStart(2, '0') + (t.getHours() < 12 ? ' AM' : ' PM') });
+        if (storage.saveSettings) storage.saveSettings(s.device, s.draft);
+        var n = storage.getAllSettings ? storage.getAllSettings() : s.settings;
+        var t = new Date();
+        self.setState({ settings: n, savedAt: (t.getHours() % 12 || 12) + ':' + String(t.getMinutes()).padStart(2, '0') + (t.getHours() < 12 ? ' AM' : ' PM') });
         toast('success', 'Settings saved for ' + self.state.draft.name + '.');
       },
       discardSettings: function () { self.setState({ draft: JSON.parse(JSON.stringify(self.state.settings[self.state.device])) }); },
       confirmReset: s.confirmReset, askReset: set({ confirmReset: true }), cancelReset: set({ confirmReset: false }),
-      doReset: function () { var d = self.defaults(); self.setState({ settings: d, alerts: self.syncAlerts(self.state.alerts, d), draft: JSON.parse(JSON.stringify(d[self.state.device])), confirmReset: false }); toast('success', 'Default settings restored.'); }
+      doReset: function () {
+        if (storage.resetToDemo) storage.resetToDemo();
+        var allDevSettings = storage.getAllSettings ? storage.getAllSettings() : self.defaults();
+        self.setState({ settings: allDevSettings, alerts: storage.getAlerts(s.device), draft: JSON.parse(JSON.stringify(allDevSettings[s.device])), confirmReset: false });
+        toast('success', 'Default demo data restored.');
+      },
+      confirmClearData: s.confirmClearData, askClearAllData: askClearAllData, cancelClearData: cancelClearData, doClearAllData: doClearAllData,
+
+      // Modal bindings
+      recordModalOpen: s.recordModalOpen,
+      recordModalMode: s.recordModalMode,
+      recordDraft: s.recordDraft,
+      openAddRecord: openAddRecord,
+      closeRecordModal: closeRecordModal,
+      handleSaveRecord: handleSaveRecord,
+      editSelectedTest: editSelectedTest,
+      askDeleteTest: askDeleteTest,
+      cancelDeleteTest: cancelDeleteTest,
+      doDeleteTest: doDeleteTest,
+      confirmDeleteRecord: s.confirmDeleteRecord,
+      deleteRecordId: s.deleteRecordId,
+
+      deviceModalOpen: s.deviceModalOpen,
+      deviceModalIsEdit: s.deviceModalIsEdit,
+      deviceDraft: s.deviceDraft,
+      openAddDevice: openAddDevice,
+      closeDeviceModal: closeDeviceModal,
+      handleSaveDevice: handleSaveDevice
     };
   }
 }
