@@ -1,0 +1,104 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Trend chart</title>
+<script src="./vendor/react.js"></script>
+<script src="./vendor/react-dom.js"></script>
+<script src="./support.js"></script>
+<link rel="stylesheet" href="ds/rejectwise/tokens.css">
+<link rel="stylesheet" href="ds/rejectwise/components/bundle.css">
+<script src="ds/rejectwise/components/bundle.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&amp;display=swap">
+<style>
+body { margin: 0; }
+</style>
+</helmet>
+<div style="width: 100%; font-family: var(--font-sans); color: var(--ink);">
+  <div style="display: grid; grid-template-columns: 40px minmax(0, 1fr); grid-template-rows: {{plotH}} 26px; column-gap: 10px; padding-top: 10px;">
+    <div style="position: relative; font-family: 'IBM Plex Mono', ui-monospace, monospace; font-size: 11px; color: var(--ink-secondary);" aria-hidden="true">
+      <sc-for list="{{ticks}}" as="t" hint-placeholder-count="4">
+        <span style="position: absolute; right: 0; bottom: {{t.pos}}; transform: translateY(50%); line-height: 1; white-space: nowrap;">{{t.label}}</span>
+      </sc-for>
+    </div>
+    <div style="position: relative; border-bottom: 1px solid var(--ink-secondary);">
+      <sc-for list="{{ticks}}" as="t" hint-placeholder-count="4">
+        <div style="position: absolute; left: 0; right: 0; bottom: {{t.pos}}; border-top: 1px solid {{t.line}};"></div>
+      </sc-for>
+      <sc-if value="{{hasBand}}" hint-placeholder-val="{{false}}">
+        <div style="position: absolute; left: 0; right: 0; bottom: {{bandBottom}}; height: {{bandHeight}}; background: var(--forest-soft); opacity: 0.75;"></div>
+      </sc-if>
+      <div onMouseLeave="{{leave}}" style="position: absolute; inset: 0; display: flex; gap: {{gap}};">
+        <sc-for list="{{cols}}" as="c" hint-placeholder-count="7">
+          <button type="button" aria-label="{{c.aria}}" onMouseEnter="{{c.pick}}" onFocus="{{c.pick}}" onBlur="{{leave}}" onClick="{{c.pick}}" style="all: unset; position: relative; flex: 1 1 0; min-width: 0; height: 100%; display: flex; flex-direction: column; justify-content: flex-end; align-items: center; background: {{c.bg}}; cursor: crosshair;">
+            <sc-if value="{{c.showTop}}" hint-placeholder-val="{{false}}">
+              <span style="position: absolute; left: 0; right: 0; text-align: center; bottom: calc({{c.h}} + 5px); font-family: 'IBM Plex Mono', ui-monospace, monospace; font-size: 10.5px; color: {{c.textColor}}; line-height: 1;">{{c.text}}</span>
+            </sc-if>
+            <div style="width: {{barW}}; max-width: 30px; height: {{c.h}}; background: {{c.color}}; border-radius: 2px 2px 0 0;"></div>
+          </button>
+        </sc-for>
+      </div>
+      <sc-if value="{{tipOn}}" hint-placeholder-val="{{false}}">
+      <div style="position: absolute; top: 4px; left: {{tipLeft}}; width: 172px; box-sizing: border-box; padding: 8px 12px; background: var(--ink); color: var(--surface); border-radius: 6px; font-size: 12px; line-height: 1.5; pointer-events: none; box-shadow: var(--shadow-popover);">
+        <div style="font-weight: 600;">{{tip.full}}</div>
+        <div style="display: flex; justify-content: space-between; gap: 12px;"><span style="color: var(--mineral);">{{seriesName}}</span><span style="font-family: 'IBM Plex Mono', ui-monospace, monospace; font-weight: 500;">{{tip.value}}</span></div>
+        <sc-if value="{{tip.hasNote}}" hint-placeholder-val="{{false}}"><div style="color: var(--mineral); font-size: 11px;">{{tip.note}}</div></sc-if>
+      </div>
+      </sc-if>
+    </div>
+    <div style="font-family: 'IBM Plex Mono', ui-monospace, monospace; font-size: 11px; color: var(--ink-secondary); align-self: end; text-align: right;" aria-hidden="true">{{unit}}</div>
+    <div style="display: flex; gap: {{gap}}; align-items: flex-end;" aria-hidden="true">
+      <sc-for list="{{cols}}" as="c" hint-placeholder-count="7">
+        <span class="{{c.labelClass}}" style="flex: 1 1 0; min-width: 0; text-align: center; font-family: 'IBM Plex Mono', ui-monospace, monospace; font-size: 11px; color: var(--ink-secondary); white-space: nowrap;">{{c.label}}</span>
+      </sc-for>
+    </div>
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"rows":{"editor":null},"seriesName":{"editor":null},"unit":{"editor":null},"min":{"editor":null},"max":{"editor":null},"step":{"editor":null},"decimals":{"editor":null},"bandLo":{"editor":null},"bandHi":{"editor":null},"bandLabel":{"editor":null},"color":{"editor":null},"warnBelow":{"editor":null},"height":{"editor":null},"labelEvery":{"editor":null},"$preview":{"width":640,"height":240}}'>
+class Component extends DCLogic {
+  constructor(props) { super(props); this.state = { hov: null }; }
+  renderVals() {
+    var self = this, p = this.props;
+    var rows = p.rows || [{ label: '24 Oct', full: '24 Oct 2026', value: 483 }, { label: '25 Oct', full: '25 Oct 2026', value: 495 }, { label: '26 Oct', full: '26 Oct 2026', value: 488 }, { label: '27 Oct', full: '27 Oct 2026', value: 491 }, { label: '28 Oct', full: '28 Oct 2026', value: 502 }, { label: '29 Oct', full: '29 Oct 2026', value: 479 }, { label: '30 Oct', full: '30 Oct 2026', value: 486 }];
+    var n = rows.length, min = p.min != null ? p.min : 0, max = p.max != null ? p.max : 600, step = p.step || 100, d = p.decimals != null ? p.decimals : 0;
+    var unit = p.unit || 'ppm', every = p.labelEvery || 1, span = max - min;
+    var active = this.state.hov != null && this.state.hov < n;
+    var hov = active ? this.state.hov : n - 1;
+    var pct = function (v) { return Math.max(0, Math.min(100, (v - min) / span * 100)).toFixed(2) + '%'; };
+    var ticks = [];
+    for (var v = min; v <= max + 1e-9; v += step) ticks.push({ label: d > 0 && step < 1 ? v.toFixed(1) : String(Math.round(v * 10) / 10), pos: pct(v), line: v === min ? 'transparent' : 'var(--border)' });
+    var base = p.color || 'var(--series-purified)';
+    var warn = function (v) { return v != null && p.warnBelow != null && v < p.warnBelow; };
+    var cols = rows.map(function (r, i) {
+      var has = r.value != null;
+      return {
+        label: i % every === 0 ? r.label : '', labelClass: i % (every * 2) === 0 ? '' : 'rw-xminor',
+        h: has ? pct(r.value) : '2px', color: has ? (warn(r.value) ? 'var(--warning)' : base) : 'var(--border-strong)',
+        text: has ? Number(r.value).toFixed(d) : 'no reading', textColor: 'var(--ink-secondary)',
+        showTop: n <= 12, bg: active && i === hov ? 'rgba(23, 76, 60, 0.07)' : 'transparent',
+        aria: r.full + ': ' + (has ? Number(r.value).toFixed(d) + ' ' + unit : 'no reading'),
+        pick: function () { if (self.state.hov !== i) self.setState({ hov: i }); }
+      };
+    });
+    var r = rows[hov], has = r.value != null;
+    var note = !has ? 'No reading recorded' : warn(r.value) ? 'Below baseline' : (r.note || '');
+    var center = (hov + 0.5) / n * 100;
+    return {
+      tipOn: active, leave: function () { if (self.state.hov != null) self.setState({ hov: null }); },
+      plotH: (p.height || 200) + 'px', ticks: ticks, cols: cols, unit: unit, seriesName: p.seriesName || 'Value',
+      gap: n > 20 ? '2px' : n > 10 ? '4px' : '10px', barW: n > 20 ? '70%' : n > 10 ? '60%' : '44%',
+      hasBand: p.bandLo != null && p.bandHi != null,
+      bandBottom: p.bandLo != null ? pct(p.bandLo) : '0%', bandHeight: p.bandLo != null ? ((p.bandHi - p.bandLo) / span * 100).toFixed(2) + '%' : '0%',
+      tip: { full: r.full, value: has ? Number(r.value).toFixed(d) + ' ' + unit : '—', note: note, hasNote: !!note },
+      tipLeft: hov >= n / 2 ? 'calc(' + center.toFixed(2) + '% - 192px)' : 'calc(' + center.toFixed(2) + '% + 20px)'
+    };
+  }
+}
+</script>
+</body>
+</html>

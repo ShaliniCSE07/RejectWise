@@ -1,0 +1,1074 @@
+<!doctype html>
+<meta charset="utf-8"><style data-dc-design-system-vars>@layer{:root{--canvas:#f7f8f5;--surface:#ffffff;--surface-raised:#fcfdfb;--sand:#e9e1d2;--sand-soft:#f5f1e9;--mineral:#b7c9be;--forest:#174c3c;--forest-deep:#10382d;--forest-soft:#dcebe3;--on-forest:#ffffff;--aqua:#4e9b91;--aqua-soft:#e1f0ed;--ink:#202b27;--ink-secondary:#52615a;--ink-muted:#7c8982;--border:#e1e7e1;--border-strong:#c9d4cc;--success:#287a52;--success-soft:#e5f2e9;--warning:#b77924;--warning-soft:#fbf0dc;--danger:#b94b45;--danger-soft:#f8e9e7;--info:#397c78;--info-soft:#e7f1ef;--series-feed:#52615a;--series-purified:#174c3c;--series-reject:#4e9b91;--focus-ring:#174c3c;--shadow-card:0 1px 2px rgba(25, 48, 38, 0.04);--shadow-popover:0 8px 24px rgba(25, 48, 38, 0.12);--space-xxs:2px;--space-xs:4px;--space-sm:8px;--space-md:12px;--space-lg:16px;--space-xl:24px;--space-xxl:32px;--space-huge:64px;--radius-xs:4px;--radius-sm:6px;--radius-md:8px;--radius-lg:12px;--radius-xl:16px;--radius-pill:9999px;--sidebar-width:240px;--sidebar-collapsed:72px;--topbar-height:64px;--content-max:1440px;--control-height:40px;--touch-target:44px;--bp-tablet:640px;--bp-desktop:1024px;--bp-wide:1440px;--font-sans:Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;--text-display-xl:600 40px/1.12 var(--font-sans);--text-display-lg:600 32px/1.18 var(--font-sans);--text-display-md:600 26px/1.22 var(--font-sans);--text-heading-lg:600 22px/1.3 var(--font-sans);--text-heading-md:600 18px/1.4 var(--font-sans);--text-heading-sm:600 16px/1.4 var(--font-sans);--text-body-lg:400 16px/1.55 var(--font-sans);--text-body-md:400 14px/1.5 var(--font-sans);--text-body-sm:400 13px/1.45 var(--font-sans);--text-numeric-lg:600 28px/1.15 var(--font-sans);--text-numeric-md:600 18px/1.25 var(--font-sans);--text-caption:500 12px/1.4 var(--font-sans);--text-micro:500 11px/1.35 var(--font-sans);}}</style>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>RejectWise dashboard</title>
+<script src="./vendor/react.js"></script>
+<script src="./vendor/react-dom.js"></script>
+<script src="./support.js"></script>
+<link rel="stylesheet" href="ds/rejectwise/tokens.css">
+<link rel="stylesheet" href="ds/rejectwise/components/bundle.css">
+<script src="ds/rejectwise/components/bundle.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&amp;display=swap">
+<style>
+body { margin: 0; background: #f7f8f5; }
+a { color: #174c3c; font-weight: 500; text-decoration: underline; text-decoration-color: #c9d4cc; text-underline-offset: 3px; }
+a:hover { color: #10382d; text-decoration-color: currentColor; }
+.mono { font-family: 'IBM Plex Mono', ui-monospace, 'SF Mono', Menlo, monospace; font-variant-numeric: tabular-nums; }
+.eyebrow { font-family: 'IBM Plex Mono', ui-monospace, 'SF Mono', Menlo, monospace; font-size: 11px; font-weight: 500; letter-spacing: 0.08em; text-transform: uppercase; color: #52615a; }
+.app-side { flex: 0 0 240px; display: flex; }
+.app-side > nav { width: 100%; }
+.app-scrim { display: none; }
+.pad { padding: 28px 32px 48px; }
+.hero { display: grid; grid-template-columns: minmax(0, 1fr) 336px; gap: 16px; align-items: stretch; }
+.ledger { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 1px; background: #e1e7e1; }
+.split { display: grid; grid-template-columns: minmax(0, 5fr) minmax(0, 7fr); gap: 32px; align-items: start; }
+.halves { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px; }
+.master { display: grid; grid-template-columns: minmax(0, 1fr) 380px; gap: 16px; align-items: start; }
+.solo { display: grid; grid-template-columns: minmax(0, 1fr); gap: 16px; }
+.third { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 2fr); gap: 24px; align-items: start; }
+.strip { display: grid; grid-template-columns: repeat(6, minmax(0, 1fr)); gap: 1px; background: #e1e7e1; }
+.ledger-eyebrow { min-height: 30px; }
+.rail-ctx { display: flex; gap: 12px; flex-wrap: wrap; align-items: center; }
+@media (max-width: 1279px) { .hero { grid-template-columns: minmax(0, 1fr); } .master { grid-template-columns: minmax(0, 1fr); } }
+@media (max-width: 1099px) { .split, .third { grid-template-columns: minmax(0, 1fr); gap: 24px; } }
+@media (max-width: 1023px) {
+  .app-side { display: none; }
+  .app-side.is-open { display: flex; position: fixed; top: 0; left: 0; bottom: 0; width: 264px; z-index: 60; }
+  .app-scrim.is-open { display: block; position: fixed; inset: 0; z-index: 55; border: 0; padding: 0; margin: 0; background: rgba(16, 56, 45, 0.36); cursor: pointer; }
+  .pad { padding: 24px 24px 40px; }
+  .halves { grid-template-columns: minmax(0, 1fr); }
+}
+@media (max-width: 1279px) { .strip { grid-template-columns: repeat(3, minmax(0, 1fr)); } }
+@media (max-width: 759px) { .ledger, .strip { grid-template-columns: repeat(2, minmax(0, 1fr)); } .ledger-eyebrow { min-height: 44px; } }
+@media (max-width: 639px) {
+  .pad { padding: 16px 16px 32px; }
+  .rail-ctx { width: 100%; }
+  .rail-ctx > * { flex: 1 1 100%; }
+  .rw-xminor { visibility: hidden; }
+  .hide-sm { display: none; }
+}
+</style>
+</helmet>
+<div style="display: flex; flex-wrap: wrap; align-items: stretch; min-height: 100vh; background: var(--canvas); color: var(--ink); font-family: var(--font-sans); font-size: 14px; line-height: 1.5;">
+
+  <div class="app-side {{menuClass}}">
+    <x-import component-from-global-scope="RejectWise.Sidebar" active="{{page}}" on-navigate="{{navigate}}" connection="{{sideConn}}" device="{{deviceName}}" counts="{{navCounts}}"></x-import>
+  </div>
+  <button type="button" class="app-scrim {{menuClass}}" aria-label="Close navigation" onClick="{{closeMenu}}"></button>
+
+  <div style="flex: 999 1 560px; min-width: 0; display: flex; flex-direction: column;">
+    <x-import component-from-global-scope="RejectWise.TopBar" breadcrumb="{{crumbs}}" alert-count="{{openCount}}" on-notifications="{{goAlerts}}" on-menu="{{openMenu}}"></x-import>
+
+    <div style="background: var(--sand-soft); border-bottom: 1px solid var(--sand);">
+      <div class="pad" style="padding-top: 12px; padding-bottom: 12px; max-width: 1440px; box-sizing: border-box; display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 12px 24px;">
+        <div style="display: flex; flex-wrap: wrap; align-items: center; gap: 8px 16px; min-width: 0;" role="status">
+          <span style="display: inline-flex; align-items: center; gap: 8px; font-weight: 600; color: var(--ink);">
+            <span style="width: 8px; height: 8px; border-radius: 50%; background: {{connDot}};" aria-hidden="true"></span>{{connLabel}}
+          </span>
+          <span class="mono" style="font-size: 12px; color: var(--ink-secondary);">{{connDetail}}</span>
+          <sc-if value="{{checkedLabel}}" hint-placeholder-val="{{false}}">
+            <span class="mono" style="font-size: 12px; color: var(--ink-secondary);">{{checkedLabel}}</span>
+          </sc-if>
+          <sc-if value="{{hasData}}" hint-placeholder-val="{{true}}">
+            <x-import component-from-global-scope="RejectWise.DataLabel" kind="demo"></x-import>
+          </sc-if>
+        </div>
+        <div class="rail-ctx">
+          <x-import component-from-global-scope="RejectWise.Select" aria-label="Device" icon="device" options="{{deviceOptions}}" value="{{device}}" on-change="{{changeDevice}}" style="width: 236px;"></x-import>
+          <sc-if value="{{showRange}}" hint-placeholder-val="{{true}}">
+            <x-import component-from-global-scope="RejectWise.Select" aria-label="Period" icon="calendar" options="{{rangeOptions}}" value="{{range}}" on-change="{{changeRange}}" disabled="{{noData}}" style="width: 236px;"></x-import>
+          </sc-if>
+        </div>
+      </div>
+    </div>
+
+    <main class="pad" style="width: 100%; max-width: 1440px; box-sizing: border-box; display: flex; flex-direction: column; gap: 28px;">
+
+      <div style="display: flex; flex-wrap: wrap; align-items: flex-end; justify-content: space-between; gap: 16px;">
+        <div style="display: flex; flex-direction: column; gap: 4px; min-width: 0;">
+          <h1 style="margin: 0; font-size: 26px; line-height: 1.22; font-weight: 600; letter-spacing: -0.5px;">{{pageTitle}}</h1>
+          <p style="margin: 0; font-size: 14px; color: var(--ink-secondary); max-width: 640px;">{{pageDesc}}</p>
+        </div>
+        <div style="display: flex; flex-wrap: wrap; gap: 8px; align-items: center;">
+          <sc-if value="{{showRefresh}}" hint-placeholder-val="{{true}}">
+            <x-import component-from-global-scope="RejectWise.Button" variant="quiet" icon="refresh" on-click="{{refresh}}">Refresh</x-import>
+          </sc-if>
+          <sc-if value="{{showExport}}" hint-placeholder-val="{{true}}">
+            <x-import component-from-global-scope="RejectWise.Button" variant="{{exportVariant}}" icon="download" on-click="{{exportCsv}}" disabled="{{noData}}">Export CSV</x-import>
+          </sc-if>
+        </div>
+      </div>
+
+      <sc-if value="{{showEmpty}}" hint-placeholder-val="{{false}}">
+        <div style="background: var(--surface); border: 1px dashed var(--border-strong); border-radius: 8px; display: flex; flex-direction: column; align-items: center; padding-bottom: 32px;">
+          <x-import component-from-global-scope="RejectWise.StateMessage" kind="empty" title="No data from this device yet">{{deviceName}} has no sensors configured and has never sent a reading. Configure its sensors in Settings, then connect its ESP32.</x-import>
+          <x-import component-from-global-scope="RejectWise.Button" variant="primary" on-click="{{goSensors}}">Configure sensors</x-import>
+        </div>
+      </sc-if>
+
+      <!-- ============ OVERVIEW ============ -->
+      <sc-if value="{{show.overview}}" hint-placeholder-val="{{true}}">
+        <div class="hero">
+          <section aria-labelledby="wb-h" style="background: var(--surface); border: 1px solid var(--border); border-radius: 8px; overflow: hidden; min-width: 0; display: flex; flex-direction: column;">
+            <div class="ledger" style="border-bottom: 1px solid var(--border);">
+              <sc-for list="{{ledger}}" as="m" hint-placeholder-count="4">
+                <div style="background: var(--surface); padding: 20px 24px 18px; display: flex; flex-direction: column; gap: 6px; min-width: 0;">
+                  <span class="eyebrow ledger-eyebrow" style="display: flex; align-items: flex-start; gap: 8px;"><span style="width: 10px; height: 10px; border-radius: 2px; background: {{m.swatch}}; flex: none; margin-top: 2px;"></span>{{m.label}}</span>
+                  <span style="display: flex; align-items: baseline; gap: 4px;">
+                    <span class="mono" style="font-size: 34px; line-height: 1.1; font-weight: 500; letter-spacing: -1px; color: {{m.color}};">{{m.value}}</span>
+                    <span style="font-size: 16px; font-weight: 500; color: var(--ink-secondary);">{{m.unit}}</span>
+                  </span>
+                  <span style="font-size: 12.5px; color: var(--ink-secondary);">{{m.note}}</span>
+                </div>
+              </sc-for>
+            </div>
+            <div style="padding: 20px 24px 8px; display: flex; flex-wrap: wrap; align-items: flex-end; justify-content: space-between; gap: 12px 24px;">
+              <div>
+                <h2 id="wb-h" style="margin: 0; font-size: 18px; line-height: 1.4; font-weight: 600; letter-spacing: -0.15px;">Water balance</h2>
+                <span class="mono" style="font-size: 12px; color: var(--ink-secondary);">{{chartCaption}}</span>
+              </div>
+              <x-import component-from-global-scope="RejectWise.Tabs" label="Chart view" items="{{viewTabs}}" value="{{chartView}}" on-change="{{changeView}}" style="border-bottom: 0;"></x-import>
+            </div>
+            <div style="padding: 4px 24px 0; display: flex; flex-wrap: wrap; gap: 6px 20px; font-size: 12px; font-weight: 500; color: var(--ink-secondary);">
+              <sc-for list="{{chartLegend}}" as="l" hint-placeholder-count="3">
+                <span style="display: inline-flex; align-items: center; gap: 6px;"><span style="width: 10px; height: 10px; border-radius: 2px; background: {{l.color}};"></span>{{l.label}}</span>
+              </sc-for>
+            </div>
+            <div style="padding: 8px 24px 16px;">
+              <dc-import name="BalanceChart" rows="{{rows}}" view="{{chartView}}" base-lo="{{cfg.baseLo}}" base-hi="{{cfg.baseHi}}" height="{{heroChartH}}" label-every="{{labelEvery}}" hint-size="100%,330px"></dc-import>
+            </div>
+            <div style="margin-top: auto; border-top: 1px solid var(--border); padding: 12px 24px; display: flex; flex-wrap: wrap; align-items: center; gap: 8px 16px; font-size: 13px; color: var(--ink-secondary); background: var(--surface-raised);">
+              <span style="display: inline-flex; align-items: center; gap: 6px;">Balance difference
+                <x-import component-from-global-scope="RejectWise.InfoTip" label="About balance difference" content="Feed minus purified minus reject. A difference can come from measurement error, retained water, leaks or timing mismatch."></x-import>
+              </span>
+              <span class="mono" style="color: var(--ink); font-weight: 500;">{{tot.diff}} L</span>
+              <x-import component-from-global-scope="RejectWise.DataLabel" kind="calculated"></x-import>
+              <span class="hide-sm" style="margin-left: auto;">Hover or tab through the bars for exact values.</span>
+            </div>
+          </section>
+
+          <section aria-labelledby="tk-h" style="background: var(--surface); border: 1px solid var(--border); border-radius: 8px; padding: 20px 24px; display: flex; flex-direction: column; gap: 18px; min-width: 0;">
+            <div style="display: flex; align-items: flex-start; justify-content: space-between; gap: 12px;">
+              <div>
+                <span class="eyebrow">Reject-water tank</span>
+                <h2 id="tk-h" style="margin: 2px 0 0; font-size: 18px; line-height: 1.4; font-weight: 600; letter-spacing: -0.15px;">Collection tank</h2>
+              </div>
+              <x-import component-from-global-scope="RejectWise.StatusChip" tone="{{tank.tone}}">{{tank.state}}</x-import>
+            </div>
+            <x-import component-from-global-scope="RejectWise.TankLevel" percent="{{tank.pct}}" capacity="{{cfg.capacity}}" threshold="{{cfg.threshold}}" data-label="demo"></x-import>
+            <div style="display: flex; flex-direction: column; gap: 10px; border-top: 1px solid var(--border); padding-top: 16px;">
+              <span class="eyebrow" style="display: flex; align-items: center; gap: 6px;">Reject water · {{rangeShort}}<x-import component-from-global-scope="RejectWise.InfoTip" label="About reject water figures" content="Generated: all reject water the purifier produced. Collected: the part that reached the tank. Reused: the part logged for a non-potable use. Each is measured or logged separately."></x-import></span>
+              <sc-for list="{{rejectFlow}}" as="r" hint-placeholder-count="3">
+                <div style="display: grid; grid-template-columns: 84px minmax(0, 1fr) 56px; align-items: center; gap: 10px; font-size: 13px;">
+                  <span style="color: var(--ink-secondary);">{{r.label}}</span>
+                  <span style="height: 8px; background: var(--aqua-soft); border-radius: 1px; overflow: hidden;"><span style="display: block; height: 100%; width: {{r.w}}; background: {{r.color}};"></span></span>
+                  <span class="mono" style="text-align: right; font-weight: 500;">{{r.value}} L</span>
+                </div>
+              </sc-for>
+              <span style="font-size: 12px; color: var(--ink-secondary);">{{rejectNote}}</span>
+            </div>
+            <div style="display: flex; flex-direction: column; gap: 8px; border-top: 1px solid var(--border); padding-top: 16px;">
+              <span class="eyebrow">Reuse log · non-potable uses only</span>
+              <sc-for list="{{reuseLog}}" as="r" hint-placeholder-count="3">
+                <div style="display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 2px 12px; font-size: 13px;">
+                  <span style="font-weight: 500;">{{r.use}}</span>
+                  <span class="mono" style="text-align: right; font-weight: 500;">{{r.vol}} L</span>
+                  <span class="mono" style="font-size: 11.5px; color: var(--ink-secondary);">{{r.date}}</span>
+                  <span style="font-size: 11.5px; color: var(--ink-secondary); text-align: right;">{{r.inRange}}</span>
+                </div>
+              </sc-for>
+            </div>
+            <a href="#recovery" onClick="{{goRecovery}}" style="margin-top: auto; font-size: 13px;">Open recovery analytics</a>
+          </section>
+        </div>
+
+        <section aria-labelledby="sq-h" style="display: flex; flex-direction: column; gap: 12px;">
+          <div style="display: flex; flex-wrap: wrap; align-items: baseline; justify-content: space-between; gap: 8px 16px;">
+            <div style="display: flex; flex-wrap: wrap; align-items: baseline; gap: 8px 14px;">
+              <h2 id="sq-h" style="margin: 0; font-size: 18px; line-height: 1.4; font-weight: 600; letter-spacing: -0.15px;">Water quality and flow</h2>
+              <span class="mono" style="font-size: 12px; color: var(--ink-secondary);">Last sample 30 Oct 2026, 10:42 AM</span>
+            </div>
+            <a href="#live" onClick="{{goLive}}" style="font-size: 13px;">Open live monitoring</a>
+          </div>
+          <div class="strip" style="border: 1px solid var(--border); border-radius: 8px; overflow: hidden;">
+            <sc-for list="{{sensors}}" as="s" hint-placeholder-count="6">
+              <div style="background: {{s.bg}}; padding: 16px 18px; display: flex; flex-direction: column; gap: 6px; min-width: 0;">
+                <span class="eyebrow">{{s.label}}</span>
+                <sc-if value="{{s.on}}" hint-placeholder-val="{{true}}">
+                  <span style="display: flex; align-items: baseline; gap: 4px;"><span class="mono" style="font-size: 24px; line-height: 1.15; font-weight: 500; letter-spacing: -0.5px;">{{s.value}}</span><span style="font-size: 13px; color: var(--ink-secondary); font-weight: 500;">{{s.unit}}</span></span>
+                  <span style="font-size: 12px; color: var(--ink-secondary);">{{s.kind}} · {{s.where}}</span>
+                </sc-if>
+                <sc-if value="{{s.off}}" hint-placeholder-val="{{false}}">
+                  <span style="font-size: 15px; font-weight: 500; color: var(--ink-secondary); line-height: 1.6;">Not configured</span>
+                  <a href="#settings" onClick="{{goSensors}}" style="font-size: 12px;">Set up in Settings</a>
+                </sc-if>
+              </div>
+            </sc-for>
+          </div>
+          <p style="margin: 0; font-size: 12.5px; color: var(--ink-secondary); max-width: 860px;">TDS measures dissolved solids and turbidity estimates cloudiness. Together they do not establish drinking-water safety; that needs a lab test.</p>
+        </section>
+
+        <div class="split">
+          <section aria-labelledby="pf-h" style="display: flex; flex-direction: column; gap: 14px; min-width: 0;">
+            <div style="display: flex; align-items: baseline; justify-content: space-between; gap: 12px; flex-wrap: wrap;">
+              <h2 id="pf-h" style="margin: 0; font-size: 18px; line-height: 1.4; font-weight: 600; letter-spacing: -0.15px;">Performance</h2>
+              <a href="#trends" onClick="{{goTrends}}" style="font-size: 13px;">Open performance trends</a>
+            </div>
+            <div style="display: flex; align-items: center; gap: 12px; flex-wrap: wrap;">
+              <x-import component-from-global-scope="RejectWise.StatusChip" tone="{{perf.tone}}">{{perf.state}}</x-import>
+              <span style="font-size: 13px; color: var(--ink-secondary);">{{perf.summary}}</span>
+            </div>
+            <dc-import name="ColumnChart" rows="{{recRows}}" series-name="{{recSeries}}" unit="%" min="{{56}}" max="{{66}}" step="{{2}}" decimals="{{1}}" band-lo="{{cfg.baseLo}}" band-hi="{{cfg.baseHi}}" warn-below="{{cfg.baseLo}}" height="{{160}}" label-every="{{labelEvery}}" hint-size="100%,206px"></dc-import>
+            <p style="margin: 0; font-size: 13px; color: var(--ink-secondary);"><span style="display: inline-block; width: 10px; height: 10px; border-radius: 2px; background: var(--forest-soft); vertical-align: -1px; margin-right: 6px;"></span>Bars show recovery from each {{recUnit}}'s totals; baseline {{cfg.baseLo}}–{{cfg.baseHi}}% (configured). {{perf.note}}</p>
+          </section>
+
+          <section aria-labelledby="ra-h" style="display: flex; flex-direction: column; gap: 12px; min-width: 0;">
+            <div style="display: flex; align-items: baseline; justify-content: space-between; gap: 12px; flex-wrap: wrap;">
+              <div style="display: flex; align-items: baseline; gap: 12px;">
+                <h2 id="ra-h" style="margin: 0; font-size: 18px; line-height: 1.4; font-weight: 600; letter-spacing: -0.15px;">Recent alerts</h2>
+                <span class="mono" style="font-size: 12px; color: var(--ink-secondary);">{{openLabel}}</span>
+              </div>
+              <a href="#alerts" onClick="{{goAlerts}}" style="font-size: 13px;">View all alerts</a>
+            </div>
+            <div style="background: var(--surface); border: 1px solid var(--border); border-radius: 8px; overflow: hidden;">
+              <sc-for list="{{recentAlerts}}" as="a" hint-placeholder-count="3">
+                <x-import component-from-global-scope="RejectWise.AlertRow" severity="{{a.severity}}" title="{{a.title}}" time="{{a.time}}" subsystem="{{a.subsystem}}" observed="{{a.observed}}" threshold="{{a.threshold}}" status="{{a.status}}" note="{{a.note}}" on-open="{{a.open}}" on-acknowledge="{{a.ack}}" on-resolve="{{a.resolve}}"></x-import>
+              </sc-for>
+            </div>
+          </section>
+        </div>
+
+        <section aria-labelledby="tr-h" style="display: flex; flex-direction: column; gap: 12px;">
+          <div style="display: flex; align-items: baseline; justify-content: space-between; gap: 12px; flex-wrap: wrap;">
+            <div style="display: flex; align-items: baseline; gap: 12px;">
+              <h2 id="tr-h" style="margin: 0; font-size: 18px; line-height: 1.4; font-weight: 600; letter-spacing: -0.15px;">Latest test runs</h2>
+              <span style="font-size: 13px; color: var(--ink-secondary);">Select a run for its details</span>
+            </div>
+            <a href="#history" onClick="{{goHistory}}" style="font-size: 13px;">Open test history</a>
+          </div>
+          <x-import component-from-global-scope="RejectWise.DataTable" columns="{{testCols}}" rows="{{latestTests}}" on-row-click="{{openTest}}"></x-import>
+        </section>
+      </sc-if>
+
+      <!-- ============ LIVE MONITORING ============ -->
+      <sc-if value="{{show.live}}" hint-placeholder-val="{{false}}">
+        <x-import component-from-global-scope="RejectWise.InlineAlert" tone="warning" title="ESP32 not connected">{{liveNote}}</x-import>
+        <sc-for list="{{liveGroups}}" as="g" hint-placeholder-count="2">
+          <section style="display: flex; flex-direction: column; gap: 12px;">
+            <h2 style="margin: 0; font-size: 18px; line-height: 1.4; font-weight: 600; letter-spacing: -0.15px;">{{g.title}}</h2>
+            <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 12px;">
+              <sc-for list="{{g.items}}" as="s" hint-placeholder-count="3">
+                <x-import component-from-global-scope="RejectWise.SensorTile" label="{{s.label}}" icon="{{s.icon}}" value="{{s.value}}" unit="{{s.unit}}" state="{{s.state}}" timestamp="{{s.ts}}" data-label="{{s.dl}}" note="{{s.note}}" unavailable-text="Not configured"></x-import>
+              </sc-for>
+            </div>
+          </section>
+        </sc-for>
+        <div class="third">
+          <section style="background: var(--surface); border: 1px solid var(--border); border-radius: 8px; padding: 20px 24px; display: flex; flex-direction: column; gap: 16px;">
+            <h2 style="margin: 0; font-size: 18px; line-height: 1.4; font-weight: 600; letter-spacing: -0.15px;">Collection tank</h2>
+            <x-import component-from-global-scope="RejectWise.TankLevel" percent="{{tank.pct}}" capacity="{{cfg.capacity}}" threshold="{{cfg.threshold}}" timestamp="10:42 AM" data-label="demo"></x-import>
+          </section>
+          <section style="display: flex; flex-direction: column; gap: 12px;">
+            <h2 style="margin: 0; font-size: 18px; line-height: 1.4; font-weight: 600; letter-spacing: -0.15px;">Sensor health</h2>
+            <x-import component-from-global-scope="RejectWise.DataTable" columns="{{healthCols}}" rows="{{healthRows}}"></x-import>
+          </section>
+        </div>
+      </sc-if>
+
+      <!-- ============ WATER QUALITY ============ -->
+      <sc-if value="{{show.quality}}" hint-placeholder-val="{{false}}">
+        <x-import component-from-global-scope="RejectWise.InlineAlert" tone="info" title="Sensor readings are not a drinking-water test">TDS measures dissolved solids; turbidity estimates cloudiness from suspended particles. They are different measurements, and together they do not establish drinking-water safety. Use lab-tested results for that.</x-import>
+        <div class="halves">
+          <sc-for list="{{qualityCharts}}" as="c" hint-placeholder-count="2">
+            <section style="background: var(--surface); border: 1px solid var(--border); border-radius: 8px; padding: 20px 24px; display: flex; flex-direction: column; gap: 10px; min-width: 0;">
+              <div style="display: flex; justify-content: space-between; gap: 12px; flex-wrap: wrap; align-items: baseline;">
+                <h2 style="margin: 0; font-size: 18px; line-height: 1.4; font-weight: 600; letter-spacing: -0.15px;">{{c.title}}</h2>
+                <span class="mono" style="font-size: 12px; color: var(--ink-secondary);">{{c.stat}}</span>
+              </div>
+              <span style="font-size: 13px; color: var(--ink-secondary);">{{c.desc}}</span>
+              <sc-if value="{{c.on}}" hint-placeholder-val="{{true}}">
+                <dc-import name="ColumnChart" rows="{{c.rows}}" series-name="{{c.series}}" unit="{{c.unit}}" min="{{c.min}}" max="{{c.max}}" step="{{c.step}}" decimals="{{c.decimals}}" color="{{c.color}}" height="{{180}}" label-every="{{labelEvery}}" hint-size="100%,226px"></dc-import>
+              </sc-if>
+              <sc-if value="{{c.off}}" hint-placeholder-val="{{false}}">
+                <div style="display: flex; flex-direction: column; align-items: center; padding-bottom: 16px;">
+                  <x-import component-from-global-scope="RejectWise.StateMessage" kind="unavailable" title="Not configured">This sensor is not installed on {{deviceName}}.</x-import>
+                  <x-import component-from-global-scope="RejectWise.Button" size="sm" on-click="{{goSensors}}">Configure sensors</x-import>
+                </div>
+              </sc-if>
+            </section>
+          </sc-for>
+        </div>
+        <section style="display: flex; flex-direction: column; gap: 12px;">
+          <div style="display: flex; align-items: baseline; gap: 12px; flex-wrap: wrap;">
+            <h2 style="margin: 0; font-size: 18px; line-height: 1.4; font-weight: 600; letter-spacing: -0.15px;">Test-run comparison</h2>
+            <span style="font-size: 13px; color: var(--ink-secondary);">Input against product water, per recorded run in the period</span>
+          </div>
+          <x-import component-from-global-scope="RejectWise.DataTable" columns="{{qualityCols}}" rows="{{periodTests}}" on-row-click="{{openTest}}" empty-title="No test runs in this period" empty-text="Choose a longer period to compare runs."></x-import>
+          <p style="margin: 0; font-size: 12.5px; color: var(--ink-secondary);">TDS reduction is calculated as (input − product) ÷ input. Sensors were last calibrated on 12 Oct 2026 (Demo data); calibration details are in Settings.</p>
+        </section>
+      </sc-if>
+
+      <!-- ============ RECOVERY ANALYTICS ============ -->
+      <sc-if value="{{show.recovery}}" hint-placeholder-val="{{false}}">
+        <section style="background: var(--surface); border: 1px solid var(--border); border-radius: 8px; overflow: hidden;">
+          <div class="ledger">
+            <sc-for list="{{recLedger}}" as="m" hint-placeholder-count="8">
+              <div style="background: var(--surface); padding: 16px 20px; display: flex; flex-direction: column; gap: 4px;">
+                <span class="eyebrow">{{m.label}}</span>
+                <span class="mono" style="font-size: 22px; font-weight: 500; letter-spacing: -0.5px; color: {{m.color}};">{{m.value}}</span>
+                <span style="font-size: 12px; color: var(--ink-secondary);">{{m.note}}</span>
+              </div>
+            </sc-for>
+          </div>
+          <div style="padding: 20px 24px 16px; display: flex; flex-direction: column; gap: 8px;">
+            <div style="display: flex; justify-content: space-between; align-items: flex-end; gap: 12px; flex-wrap: wrap;">
+              <div>
+                <h2 style="margin: 0; font-size: 18px; line-height: 1.4; font-weight: 600; letter-spacing: -0.15px;">Feed split into purified and reject</h2>
+                <span class="mono" style="font-size: 12px; color: var(--ink-secondary);">{{chartCaption}}</span>
+              </div>
+              <x-import component-from-global-scope="RejectWise.Tabs" label="Chart view" items="{{viewTabs}}" value="{{chartView}}" on-change="{{changeView}}"></x-import>
+            </div>
+            <dc-import name="BalanceChart" rows="{{rows}}" view="{{chartView}}" base-lo="{{cfg.baseLo}}" base-hi="{{cfg.baseHi}}" height="{{260}}" label-every="{{labelEvery}}" hint-size="100%,310px"></dc-import>
+          </div>
+        </section>
+        <div class="halves">
+          <section style="display: flex; flex-direction: column; gap: 12px;">
+            <h2 style="margin: 0; font-size: 18px; line-height: 1.4; font-weight: 600; letter-spacing: -0.15px;">How these are calculated</h2>
+            <div class="mono" style="font-size: 12.5px; line-height: 1.9; background: var(--surface); border: 1px solid var(--border); border-radius: 8px; padding: 16px 20px; color: var(--ink);">
+              <div>Recovery rate&nbsp;&nbsp;&nbsp;= purified ÷ feed × 100</div>
+              <div>Reject fraction = reject ÷ feed × 100</div>
+              <div>Difference&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;= feed − purified − reject</div>
+            </div>
+            <p style="margin: 0; font-size: 13px; color: var(--ink-secondary);">A balance difference can come from measurement error, water retained in the unit, leaks or timing mismatch between sensors. Reject generated is what the purifier sends to drain; collected is what reached the tank; reused is what was logged for a non-drinking use.</p>
+          </section>
+          <section style="display: flex; flex-direction: column; gap: 12px;">
+            <h2 style="margin: 0; font-size: 18px; line-height: 1.4; font-weight: 600; letter-spacing: -0.15px;">Reuse log</h2>
+            <span style="font-size: 13px; color: var(--ink-secondary);">Reject water is for non-potable uses only. Each entry is a logged use with its date, time, volume and purpose.</span>
+            <x-import component-from-global-scope="RejectWise.DataTable" columns="{{reuseCols}}" rows="{{reuseRows}}" empty-title="No reuse logged in this period" empty-text="Reuse entries appear here when collected water is used."></x-import>
+          </section>
+        </div>
+      </sc-if>
+
+      <!-- ============ PERFORMANCE TRENDS ============ -->
+      <sc-if value="{{show.trends}}" hint-placeholder-val="{{false}}">
+        <section style="background: var(--surface); border: 1px solid var(--border); border-radius: 8px; padding: 20px 24px; display: flex; flex-direction: column; gap: 14px;">
+          <div style="display: flex; justify-content: space-between; align-items: flex-start; gap: 12px; flex-wrap: wrap;">
+            <div>
+              <h2 style="margin: 0; font-size: 18px; line-height: 1.4; font-weight: 600; letter-spacing: -0.15px;">Daily recovery against baseline</h2>
+              <span style="font-size: 13px; color: var(--ink-secondary);">{{perf.summary}}</span>
+              <span class="mono" style="font-size: 12px; color: var(--ink-secondary);">{{recCaption}} · baseline {{cfg.baseLo}}–{{cfg.baseHi}}%</span>
+            </div>
+            <x-import component-from-global-scope="RejectWise.StatusChip" tone="{{perf.tone}}">{{perf.state}}</x-import>
+          </div>
+          <dc-import name="ColumnChart" rows="{{recRows}}" series-name="{{recSeries}}" unit="%" min="{{56}}" max="{{66}}" step="{{2}}" decimals="{{1}}" band-lo="{{cfg.baseLo}}" band-hi="{{cfg.baseHi}}" warn-below="{{cfg.baseLo}}" height="{{240}}" label-every="{{labelEvery}}" hint-size="100%,286px"></dc-import>
+        </section>
+        <div class="halves">
+          <section style="display: flex; flex-direction: column; gap: 12px;">
+            <h2 style="margin: 0; font-size: 18px; line-height: 1.4; font-weight: 600; letter-spacing: -0.15px;">Flags to investigate</h2>
+            <x-import component-from-global-scope="RejectWise.DataTable" columns="{{flagCols}}" rows="{{flagRows}}" empty-title="No flags in this period" empty-text="Every day in the period was within the configured baseline."></x-import>
+            <p style="margin: 0; font-size: 13px; color: var(--ink-secondary);">A flag means recovery moved outside the configured baseline. Source-water quality, pressure, temperature, flow restrictions and sensor calibration all affect recovery, so a flag is a prompt to check, not a diagnosis of filter condition or remaining life.</p>
+          </section>
+          <section style="display: flex; flex-direction: column; gap: 12px;">
+            <h2 style="margin: 0; font-size: 18px; line-height: 1.4; font-weight: 600; letter-spacing: -0.15px;">Context</h2>
+            <div style="background: var(--surface); border: 1px solid var(--border); border-radius: 8px; padding: 16px 20px;">
+              <span class="eyebrow">Input TDS, ppm</span>
+              <dc-import name="ColumnChart" rows="{{tdsRows}}" series-name="Input TDS" unit="ppm" min="{{400}}" max="{{520}}" step="{{40}}" decimals="{{0}}" color="var(--series-feed)" height="{{120}}" label-every="{{labelEvery}}" hint-size="100%,166px"></dc-import>
+            </div>
+            <div style="background: var(--surface); border: 1px dashed var(--border-strong); border-radius: 8px;">
+              <x-import component-from-global-scope="RejectWise.StateMessage" kind="unavailable" title="Pressure trend not available">No pressure sensor is installed, so pressure cannot be used as context here.</x-import>
+            </div>
+          </section>
+        </div>
+      </sc-if>
+
+      <!-- ============ TEST HISTORY ============ -->
+      <sc-if value="{{show.history}}" hint-placeholder-val="{{false}}">
+        <div style="display: flex; flex-wrap: wrap; gap: 12px; align-items: flex-end;">
+          <x-import component-from-global-scope="RejectWise.TextField" label="Search" icon="search" placeholder="Test ID or note" value="{{testQuery}}" on-change="{{changeQuery}}" style="width: 280px;"></x-import>
+          <x-import component-from-global-scope="RejectWise.Select" label="Status" options="{{statusOptions}}" value="{{testStatus}}" on-change="{{changeStatus}}" style="width: 200px;"></x-import>
+          <x-import component-from-global-scope="RejectWise.Select" label="Date" icon="calendar" options="{{dateOptions}}" value="{{testDate}}" on-change="{{changeDate}}" style="width: 200px;"></x-import>
+          <span class="mono" style="font-size: 12px; color: var(--ink-secondary); padding-bottom: 10px;">{{historyCount}}</span>
+          <sc-if value="{{filtersOn}}" hint-placeholder-val="{{false}}">
+            <x-import component-from-global-scope="RejectWise.Button" variant="quiet" on-click="{{clearFilters}}">Clear filters</x-import>
+          </sc-if>
+        </div>
+        <dl style="margin: 0; display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 12px 24px; padding: 14px 18px; background: var(--surface-raised); border: 1px solid var(--border); border-radius: 8px;">
+          <sc-for list="{{statusDefs}}" as="d" hint-placeholder-count="3">
+            <div style="display: flex; flex-direction: column; gap: 6px; min-width: 0;">
+              <dt><x-import component-from-global-scope="RejectWise.StatusChip" tone="{{d.tone}}">{{d.label}}</x-import></dt>
+              <dd style="margin: 0; font-size: 12.5px; color: var(--ink-secondary);">{{d.text}}</dd>
+            </div>
+          </sc-for>
+        </dl>
+        <div class="{{testMaster}}">
+          <x-import component-from-global-scope="RejectWise.DataTable" columns="{{historyCols}}" rows="{{filteredTests}}" on-row-click="{{openTest}}" selected-id="{{testSel}}" empty-title="No runs match these filters" empty-text="Try a different search or clear the filters."></x-import>
+          <sc-if value="{{testDetail.on}}" hint-placeholder-val="{{false}}">
+            <aside aria-label="Test details" style="background: var(--surface); border: 1px solid var(--border); border-radius: 8px; padding: 20px 24px; display: flex; flex-direction: column; gap: 16px;">
+              <div style="display: flex; justify-content: space-between; align-items: flex-start; gap: 8px;">
+                <div>
+                  <span class="eyebrow">Test run</span>
+                  <h2 class="mono" style="margin: 2px 0 0; font-size: 22px; font-weight: 500;">{{testDetail.id}}</h2>
+                  <span style="font-size: 13px; color: var(--ink-secondary);">{{testDetail.date}} · {{testDetail.cond}}</span>
+                </div>
+                <x-import component-from-global-scope="RejectWise.Button" variant="quiet" size="sm" icon="close" aria-label="Close test details" on-click="{{closeTest}}"></x-import>
+              </div>
+              <div style="display: flex; gap: 8px; flex-wrap: wrap;">
+                <x-import component-from-global-scope="RejectWise.StatusChip" tone="{{testDetail.tone}}">{{testDetail.status}}</x-import>
+                <x-import component-from-global-scope="RejectWise.DataLabel" kind="demo"></x-import>
+              </div>
+              <div style="display: flex; flex-direction: column; gap: 6px; padding: 12px 14px; border-radius: 6px; background: {{testDetail.reasonBg}};">
+                <span style="font-size: 13px; font-weight: 600;">{{testDetail.reasonTitle}}</span>
+                <sc-for list="{{testDetail.reasons}}" as="r" hint-placeholder-count="2">
+                  <span style="font-size: 13px; color: var(--ink);">{{r}}</span>
+                </sc-for>
+              </div>
+              <dl style="margin: 0; display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 8px 16px; font-size: 13px;">
+                <sc-for list="{{testDetail.facts}}" as="f" hint-placeholder-count="9">
+                  <dt style="color: var(--ink-secondary);">{{f.k}}</dt>
+                  <dd class="mono" style="margin: 0; text-align: right; color: {{f.color}};">{{f.v}}</dd>
+                </sc-for>
+              </dl>
+              <div style="font-size: 13px; color: var(--ink-secondary); background: var(--canvas); border-radius: 6px; padding: 12px 14px;">{{testDetail.notes}}</div>
+            </aside>
+          </sc-if>
+        </div>
+      </sc-if>
+
+      <!-- ============ ALERTS ============ -->
+      <sc-if value="{{show.alerts}}" hint-placeholder-val="{{false}}">
+        <div style="display: flex; flex-wrap: wrap; gap: 12px 24px; align-items: flex-end; justify-content: space-between; border-bottom: 1px solid var(--border);">
+          <x-import component-from-global-scope="RejectWise.Tabs" label="Alert status" items="{{alertTabs}}" value="{{alertTab}}" on-change="{{changeAlertTab}}" style="border-bottom: 0;"></x-import>
+          <x-import component-from-global-scope="RejectWise.Select" aria-label="Severity" options="{{sevOptions}}" value="{{alertSev}}" on-change="{{changeSev}}" style="width: 180px; margin-bottom: 8px;"></x-import>
+        </div>
+        <div class="{{alertMaster}}">
+          <div style="background: var(--surface); border: 1px solid var(--border); border-radius: 8px; overflow: hidden; min-width: 0;">
+            <sc-for list="{{alertList}}" as="a" hint-placeholder-count="3">
+              <x-import component-from-global-scope="RejectWise.AlertRow" severity="{{a.severity}}" title="{{a.title}}" time="{{a.time}}" subsystem="{{a.subsystem}}" observed="{{a.observed}}" threshold="{{a.threshold}}" next-check="{{a.next}}" status="{{a.status}}" note="{{a.note}}" on-open="{{a.open}}" on-acknowledge="{{a.ack}}" on-resolve="{{a.resolve}}"></x-import>
+            </sc-for>
+            <sc-if value="{{alertsEmpty}}" hint-placeholder-val="{{false}}">
+              <x-import component-from-global-scope="RejectWise.StateMessage" kind="empty" title="{{alertsEmptyTitle}}">{{alertsEmptyText}}</x-import>
+            </sc-if>
+          </div>
+          <sc-if value="{{alertDetail.on}}" hint-placeholder-val="{{false}}">
+            <aside aria-label="Alert details" style="background: var(--surface); border: 1px solid var(--border); border-radius: 8px; padding: 20px 24px; display: flex; flex-direction: column; gap: 14px;">
+              <div style="display: flex; justify-content: space-between; align-items: flex-start; gap: 8px;">
+                <div>
+                  <span class="eyebrow">{{alertDetail.id}} · {{alertDetail.sevLabel}}</span>
+                  <h2 style="margin: 2px 0 0; font-size: 18px; line-height: 1.4; font-weight: 600;">{{alertDetail.title}}</h2>
+                  <span class="mono" style="font-size: 12px; color: var(--ink-secondary);">{{alertDetail.time}}</span>
+                </div>
+                <x-import component-from-global-scope="RejectWise.Button" variant="quiet" size="sm" icon="close" aria-label="Close alert details" on-click="{{closeAlert}}"></x-import>
+              </div>
+              <x-import component-from-global-scope="RejectWise.StatusChip" tone="{{alertDetail.tone}}" icon="{{alertDetail.icon}}">{{alertDetail.statusLabel}}</x-import>
+              <p style="margin: 0; font-size: 14px; color: var(--ink);">{{alertDetail.detail}}</p>
+              <dl style="margin: 0; display: grid; grid-template-columns: auto minmax(0, 1fr); gap: 6px 16px; font-size: 13px;">
+                <sc-for list="{{alertDetail.facts}}" as="f" hint-placeholder-count="4">
+                  <dt style="color: var(--ink-secondary);">{{f.k}}</dt>
+                  <dd style="margin: 0; font-weight: 500;">{{f.v}}</dd>
+                </sc-for>
+              </dl>
+              <sc-if value="{{alertDetail.hasTest}}" hint-placeholder-val="{{false}}">
+                <a href="#history" onClick="{{alertDetail.openTest}}" style="font-size: 13px;">Open related test run {{alertDetail.related}}</a>
+              </sc-if>
+              <div style="border-top: 1px solid var(--border); padding-top: 14px; display: flex; flex-direction: column; gap: 10px;">
+                <span class="eyebrow">History</span>
+                <ol style="margin: 0; padding: 0; list-style: none; display: flex; flex-direction: column; gap: 8px;">
+                  <sc-for list="{{alertDetail.events}}" as="e" hint-placeholder-count="2">
+                    <li style="display: grid; grid-template-columns: 112px minmax(0, 1fr); gap: 10px; font-size: 13px;">
+                      <span class="mono" style="font-size: 11.5px; color: var(--ink-secondary); padding-top: 1px;">{{e.t}}</span>
+                      <span>{{e.text}}</span>
+                    </li>
+                  </sc-for>
+                </ol>
+              </div>
+              <div style="display: flex; gap: 8px; flex-wrap: wrap; align-items: center; border-top: 1px solid var(--border); padding-top: 14px;">
+                <sc-if value="{{alertDetail.canAck}}" hint-placeholder-val="{{false}}">
+                  <x-import component-from-global-scope="RejectWise.Button" variant="secondary" size="sm" on-click="{{alertDetail.ack}}">Acknowledge</x-import>
+                </sc-if>
+                <sc-if value="{{alertDetail.canResolve}}" hint-placeholder-val="{{false}}">
+                  <x-import component-from-global-scope="RejectWise.Button" variant="secondary" size="sm" on-click="{{alertDetail.resolve}}">Mark resolved</x-import>
+                </sc-if>
+                <sc-if value="{{alertDetail.autoNote}}" hint-placeholder-val="{{false}}">
+                  <span style="font-size: 12.5px; color: var(--ink-secondary);">Resolves automatically when the condition clears. It cannot be closed by hand while it persists.</span>
+                </sc-if>
+                <sc-if value="{{alertDetail.resolvedNote}}" hint-placeholder-val="{{false}}">
+                  <span style="font-size: 12.5px; color: var(--ink-secondary);">Kept as history. If the condition returns, a new alert is raised and linked to this one.</span>
+                </sc-if>
+              </div>
+            </aside>
+          </sc-if>
+        </div>
+      </sc-if>
+
+      <!-- ============ REPORTS ============ -->
+      <sc-if value="{{show.reports}}" hint-placeholder-val="{{false}}">
+        <section style="background: var(--surface); border: 1px solid var(--border); border-radius: 8px; overflow: hidden;">
+          <div style="padding: 20px 24px; display: flex; justify-content: space-between; gap: 12px; flex-wrap: wrap; align-items: baseline; border-bottom: 1px solid var(--border);">
+            <div>
+              <span class="eyebrow">Report preview</span>
+              <h2 style="margin: 2px 0 0; font-size: 18px; line-height: 1.4; font-weight: 600;">{{deviceName}} · {{rangeLong}}</h2>
+            </div>
+            <span style="font-size: 13px; color: var(--ink-secondary);">The CSV contains the rows below, labelled as Demo data. PDF export is not available in this prototype.</span>
+          </div>
+          <div class="ledger">
+            <sc-for list="{{recLedger}}" as="m" hint-placeholder-count="8">
+              <div style="background: var(--surface); padding: 14px 20px; display: flex; flex-direction: column; gap: 2px;">
+                <span class="eyebrow">{{m.label}}</span>
+                <span class="mono" style="font-size: 18px; font-weight: 500;">{{m.value}}</span>
+              </div>
+            </sc-for>
+          </div>
+        </section>
+        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 16px;">
+          <sc-for list="{{reportFacts}}" as="f" hint-placeholder-count="3">
+            <div style="border-top: 2px solid var(--ink); padding-top: 10px; display: flex; flex-direction: column; gap: 2px;">
+              <span class="eyebrow">{{f.label}}</span>
+              <span class="mono" style="font-size: 22px; font-weight: 500;">{{f.value}}</span>
+              <span style="font-size: 12.5px; color: var(--ink-secondary);">{{f.note}}</span>
+            </div>
+          </sc-for>
+        </div>
+        <section style="display: flex; flex-direction: column; gap: 12px;">
+          <h2 style="margin: 0; font-size: 18px; line-height: 1.4; font-weight: 600; letter-spacing: -0.15px;">Rows in the export</h2>
+          <x-import component-from-global-scope="RejectWise.DataTable" columns="{{reportCols}}" rows="{{reportRows}}"></x-import>
+        </section>
+      </sc-if>
+
+      <!-- ============ SETTINGS ============ -->
+      <sc-if value="{{show.settings}}" hint-placeholder-val="{{false}}">
+        <x-import component-from-global-scope="RejectWise.Tabs" label="Settings sections" items="{{settingsTabs}}" value="{{settingsTab}}" on-change="{{changeSettingsTab}}"></x-import>
+        <div style="max-width: 760px; display: flex; flex-direction: column; gap: 20px;">
+          <sc-if value="{{st.device}}" hint-placeholder-val="{{true}}">
+            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 16px;">
+              <x-import component-from-global-scope="RejectWise.TextField" label="Device name" value="{{draft.name}}" on-change="{{setName}}" error="{{err.name}}"></x-import>
+              <x-import component-from-global-scope="RejectWise.TextField" label="Location" value="{{draft.location}}" on-change="{{setLocation}}" hint="Where the unit is installed."></x-import>
+              <x-import component-from-global-scope="RejectWise.TextField" label="Collection tank capacity" type="number" unit="L" value="{{draft.capacity}}" on-change="{{setCapacity}}" error="{{err.capacity}}" hint="Used to estimate litres from the level sensor."></x-import>
+              <x-import component-from-global-scope="RejectWise.TextField" label="Controller" value="ESP32 · not connected" disabled="{{yes}}" hint="Connection is set up on the device, not here."></x-import>
+            </div>
+          </sc-if>
+          <sc-if value="{{st.sensors}}" hint-placeholder-val="{{false}}">
+            <p style="margin: 0; font-size: 13px; color: var(--ink-secondary);">Mark each sensor as installed or not configured. Sensors that are not configured are shown as Not configured across the dashboard, never with a value.</p>
+            <div style="background: var(--surface); border: 1px solid var(--border); border-radius: 8px; overflow: hidden;">
+              <sc-for list="{{sensorRows}}" as="s" hint-placeholder-count="8">
+                <div style="display: flex; flex-wrap: wrap; gap: 8px 16px; align-items: center; justify-content: space-between; padding: 12px 20px; border-bottom: 1px solid var(--border);">
+                  <div style="min-width: 200px; flex: 1 1 240px;">
+                    <div style="font-weight: 500;">{{s.label}}</div>
+                    <div class="mono" style="font-size: 12px; color: var(--ink-secondary);">{{s.cal}}</div>
+                  </div>
+                  <x-import component-from-global-scope="RejectWise.Select" aria-label="{{s.aria}}" options="{{sensorStateOptions}}" value="{{s.value}}" on-change="{{s.change}}" style="width: 200px;"></x-import>
+                </div>
+              </sc-for>
+            </div>
+          </sc-if>
+          <sc-if value="{{st.thresholds}}" hint-placeholder-val="{{false}}">
+            <p style="margin: 0; font-size: 13px; color: var(--ink-secondary);">Alerts and flags use only these values. Nothing is assumed when a field is empty.</p>
+            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 16px;">
+              <x-import component-from-global-scope="RejectWise.TextField" label="Tank alert level" type="number" unit="%" value="{{draft.threshold}}" on-change="{{setThreshold}}" error="{{err.threshold}}" hint="Alert when the tank reaches this level."></x-import>
+              <x-import component-from-global-scope="RejectWise.TextField" label="Reading freshness window" type="number" unit="min" value="{{draft.freshness}}" on-change="{{setFreshness}}" error="{{err.freshness}}" hint="Older readings are marked stale."></x-import>
+              <x-import component-from-global-scope="RejectWise.TextField" label="Recovery baseline, low" type="number" unit="%" value="{{draft.baseLo}}" on-change="{{setBaseLo}}" error="{{err.baseLo}}"></x-import>
+              <x-import component-from-global-scope="RejectWise.TextField" label="Recovery baseline, high" type="number" unit="%" value="{{draft.baseHi}}" on-change="{{setBaseHi}}" error="{{err.baseHi}}"></x-import>
+            </div>
+          </sc-if>
+          <sc-if value="{{st.privacy}}" hint-placeholder-val="{{false}}">
+            <div style="display: flex; flex-direction: column; gap: 12px; font-size: 14px; max-width: 640px;">
+              <p style="margin: 0;">This prototype shows Demo data only. Settings you change here are kept in this browser tab and are lost when it reloads.</p>
+              <p style="margin: 0;">When a device is connected, RejectWise stores sensor values, units, timestamps, the device ID and a data-quality status for each reading. It does not collect personal information about the people using the purifier.</p>
+              <p style="margin: 0; color: var(--ink-secondary);">Reuse entries record the volume and the stated non-drinking purpose only.</p>
+              <div>
+                <x-import component-from-global-scope="RejectWise.Button" variant="secondary" on-click="{{askReset}}">Restore default settings</x-import>
+              </div>
+            </div>
+          </sc-if>
+          <sc-if value="{{st.editable}}" hint-placeholder-val="{{true}}">
+            <div style="display: flex; gap: 8px; align-items: center; flex-wrap: wrap; border-top: 1px solid var(--border); padding-top: 16px;">
+              <x-import component-from-global-scope="RejectWise.Button" variant="primary" disabled="{{saveDisabled}}" on-click="{{saveSettings}}">Save changes</x-import>
+              <x-import component-from-global-scope="RejectWise.Button" variant="secondary" disabled="{{notDirty}}" on-click="{{discardSettings}}">Discard</x-import>
+              <span style="font-size: 13px; color: var(--ink-secondary);">{{saveNote}}</span>
+            </div>
+          </sc-if>
+        </div>
+        <x-import component-from-global-scope="RejectWise.ConfirmDialog" open="{{confirmReset}}" title="Restore default settings?" confirm-label="Restore defaults" tone="danger" on-confirm="{{doReset}}" on-cancel="{{cancelReset}}">Device names, tank capacity, sensor configuration and thresholds for both devices go back to their defaults. Unsaved edits are discarded.</x-import>
+      </sc-if>
+
+      <p style="margin: 8px 0 0; padding-top: 16px; border-top: 1px solid var(--border); font-size: 12px; color: var(--ink-secondary);">Prototype. Every reading, volume, alert and test run shown is Demo data, not a hardware measurement or a validated purifier benchmark. No live device is connected.</p>
+    </main>
+  </div>
+
+  <sc-if value="{{toastOn}}" hint-placeholder-val="{{false}}">
+    <div style="position: fixed; right: 24px; bottom: 24px; left: auto; z-index: 70; max-width: calc(100vw - 48px);">
+      <x-import component-from-global-scope="RejectWise.Toast" tone="{{toast.tone}}" on-close="{{closeToast}}">{{toast.text}}</x-import>
+    </div>
+  </sc-if>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1440,"height":2290}}'>
+class Component extends DCLogic {
+  constructor(props) {
+    super(props);
+    this.vw = typeof window !== 'undefined' ? window.innerWidth : 1440;
+    var d = this.defaults();
+    this.state = {
+      page: 'overview', menuOpen: false, device: 'unit-01', range: '7d', chartView: 'volume',
+      toast: null, checkedAt: null,
+      alerts: this.initialAlerts(),
+      alertTab: 'active', alertSev: 'all', alertSel: 'A-104',
+      testQuery: '', testStatus: 'all', testDate: 'all', testSel: null,
+      settingsTab: 'device', settings: d, draft: JSON.parse(JSON.stringify(d['unit-01'])), confirmReset: false, savedAt: null
+    };
+  }
+  componentDidMount() {
+    var self = this;
+    this.vw = window.innerWidth;
+    this._onResize = function () { var w = window.innerWidth, band = function (x) { return x >= 1280 ? 2 : x >= 640 ? 1 : 0; }; if (band(w) !== band(self.vw)) { self.vw = w; self.forceUpdate(); } else { self.vw = w; } };
+    window.addEventListener('resize', this._onResize);
+    this.forceUpdate();
+  }
+  componentWillUnmount() { window.removeEventListener('resize', this._onResize); clearTimeout(this._tt); }
+  initialAlerts() {
+    var ev = function (t, text) { return { t: t, text: text }; };
+    return [
+      { id: 'A-106', kind: 'stale', severity: 'warning', title: 'Input turbidity reading stale', raised: '29 Oct 2026, 5:05 PM', day: 29, subsystem: 'Input turbidity sensor', observed: 'No reading 4:35 to 5:22 PM (47 min)', thrKey: 'freshness', next: 'Check the sensor cable and that the probe is submerged.', detail: 'The turbidity sensor stopped reporting at 4:35 PM, so test run T-013 was saved without a turbidity value. A valid reading arrived at 5:22 PM and the alert resolved itself; readings have been fresh since, up to the 10:42 AM sample on 30 Oct.', related: 'T-013', status: 'resolved',
+        events: [ev('29 Oct, 5:05 PM', 'Raised: no reading within the configured freshness window.'), ev('29 Oct, 5:22 PM', 'Auto-resolved: a valid reading arrived (2.0 NTU).')] },
+      { id: 'A-105', kind: 'tank', severity: 'warning', title: 'Tank above alert level', raised: '28 Oct 2026, 6:10 PM', day: 28, subsystem: 'Collection tank', observed: '91% (18.2 L of 20 L)', thrKey: 'tank', next: 'Reuse collected reject water for a non-potable purpose, or empty the tank.', detail: 'The measured level reached the configured alert level. 7.2 L was then reused for floor cleaning, which brought the level back below it.', status: 'resolved',
+        events: [ev('28 Oct, 6:10 PM', 'Raised: level 91% reached the configured alert level.'), ev('28 Oct, 6:20 PM', 'Acknowledged.'), ev('28 Oct, 6:40 PM', 'Auto-resolved: level fell to 55% after 7.2 L was reused.')] },
+      { id: 'A-104', kind: 'test', severity: 'info', title: 'Test recovery below baseline', raised: '28 Oct 2026, 9:40 AM', day: 28, subsystem: 'Recovery rate, test T-012', observed: '60.0% test recovery', thrKey: 'baseline', next: 'Compare input TDS and feed flow for run T-012, then resolve with your finding.', detail: 'Test T-012 recovered 60.0%, below the configured baseline, while input TDS was higher than usual (502 ppm, borewell blend). Later runs are back inside the baseline, but a test flag stays open until a person reviews it. It is a prompt to investigate, not a diagnosis of filter condition.', related: 'T-012', status: 'acknowledged',
+        events: [ev('28 Oct, 9:40 AM', 'Raised: test recovery 60.0% is below the baseline low.'), ev('28 Oct, 10:05 AM', 'Acknowledged. Awaiting review.')] },
+      { id: 'A-103', kind: 'connection', severity: 'critical', title: 'ESP32 disconnected', raised: '20 Oct 2026, 2:15 PM', day: 20, subsystem: 'Device connection', observed: 'No readings 1:45 to 2:23 PM (38 min)', thrKey: 'freshness', next: 'Check power and Wi-Fi at the unit.', detail: 'The device sent no readings for 38 minutes. No values exist for that window, and none were estimated to fill it.', status: 'resolved',
+        events: [ev('20 Oct, 2:15 PM', 'Raised: no readings within the configured freshness window.'), ev('20 Oct, 2:23 PM', 'Auto-resolved: readings resumed.')] },
+      { id: 'A-102', kind: 'tankfull', severity: 'critical', title: 'Tank full', raised: '12 Oct 2026, 7:30 PM', day: 12, subsystem: 'Collection tank', observed: '100% (20 L of 20 L)', thrKey: null, next: 'Reuse or empty collected water.', detail: 'The tank filled before it was emptied. About 1.2 L of reject water was generated but not collected while it was full.', status: 'resolved',
+        events: [ev('12 Oct, 7:30 PM', 'Raised: tank at 100%.'), ev('12 Oct, 8:05 PM', 'Acknowledged.'), ev('13 Oct, 7:50 AM', 'Auto-resolved: level fell to 73% after 5.5 L was reused.')] },
+      { id: 'A-101', kind: 'test', severity: 'info', title: 'Test recovery below baseline', raised: '12 Oct 2026, 9:10 AM', day: 12, subsystem: 'Recovery rate, test T-004', observed: '59.1% test recovery', thrKey: 'baseline', next: 'Compare input TDS and feed flow for run T-004.', detail: 'Test T-004 recovered 59.1% on a borewell blend with input TDS of 505 ppm. Reviewed and resolved; a prompt to investigate, not a diagnosis.', related: 'T-004', status: 'resolved',
+        events: [ev('12 Oct, 9:10 AM', 'Raised: test recovery 59.1% is below the baseline low.'), ev('12 Oct, 9:30 AM', 'Acknowledged.'), ev('13 Oct, 10:00 AM', 'Resolved by reviewer: higher input TDS from the borewell blend.')] }
+    ];
+  }
+  nowLabel() {
+    var t = new Date(), m = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'][t.getMonth()];
+    return t.getDate() + ' ' + m + ', ' + (t.getHours() % 12 || 12) + ':' + String(t.getMinutes()).padStart(2, '0') + (t.getHours() < 12 ? ' AM' : ' PM');
+  }
+  syncAlerts(alerts, settings) {
+    var cfg = settings['unit-01'], now = this.nowLabel();
+    var level = cfg.sensors.level === 'installed' ? 72 : null, thr = parseFloat(cfg.threshold);
+    var cond = level != null && !isNaN(thr) && level >= thr;
+    var list = alerts.map(function (a) { return Object.assign({}, a, { events: a.events.slice() }); });
+    var active = list.filter(function (a) { return a.kind === 'tank' && a.status !== 'resolved'; })[0];
+    if (cond && !active) {
+      var prev = list.filter(function (a) { return a.kind === 'tank'; })[0];
+      var nextNum = Math.max.apply(null, list.map(function (a) { return parseInt(a.id.slice(2), 10); })) + 1;
+      var cap = parseFloat(cfg.capacity), litres = cap > 0 ? ' (' + (Math.round(cap * level / 10) / 10).toFixed(1) + ' L of ' + cap + ' L)' : '';
+      list.unshift({ id: 'A-' + nextNum, kind: 'tank', severity: 'warning', title: 'Tank above alert level', raised: now, day: 30, subsystem: 'Collection tank', observed: level + '%' + litres, thrKey: 'tank',
+        next: 'Reuse collected reject water for a non-potable purpose, empty the tank, or review the alert level.', detail: 'The measured level is at or above the configured alert level. This clears automatically when the level falls below it.',
+        recurrenceOf: prev ? prev.id : null, status: 'open',
+        events: [{ t: now, text: 'Raised: level ' + level + '% is at or above the configured ' + thr + '% alert level.' + (prev ? ' Same condition as ' + prev.id + ', resolved earlier; logged as a new occurrence.' : '') }] });
+    } else if (!cond && active) {
+      active.status = 'resolved';
+      active.events.push({ t: now, text: level == null ? 'Auto-resolved: the level sensor is no longer configured.' : 'Auto-resolved: level ' + level + '% is below the configured ' + thr + '% alert level.' });
+    }
+    return list;
+  }
+  defaults() {
+    return {
+      'unit-01': { name: 'RejectWise Unit 01', location: 'Test bench A', capacity: '20', threshold: '90', freshness: '30', baseLo: '60.5', baseHi: '63.0',
+        sensors: { inTds: 'installed', inNtu: 'installed', prodTds: 'installed', feedFlow: 'installed', rejFlow: 'installed', purFlow: 'none', level: 'installed', pressure: 'none' } },
+      'unit-02': { name: 'RejectWise Unit 02', location: '', capacity: '20', threshold: '90', freshness: '30', baseLo: '60.5', baseHi: '63.0',
+        sensors: { inTds: 'none', inNtu: 'none', prodTds: 'none', feedFlow: 'none', rejFlow: 'none', purFlow: 'none', level: 'none', pressure: 'none' } }
+    };
+  }
+  data() {
+    if (this._data) return this._data;
+    var feed = [4.1,3.9,4.4,4.2,4.6,3.7,4.0,4.3,4.5,3.8,4.2,4.4,4.1,3.9,4.6,4.3,4.0,4.2,3.8,4.5,4.4,4.1,4.3,4.2,4.6,3.8,4.4,4.0,4.5,4.5];
+    var pur = [2.5,2.4,2.7,2.6,2.8,2.3,2.5,2.7,2.8,2.3,2.6,2.6,2.5,2.4,2.8,2.7,2.5,2.6,2.3,2.8,2.7,2.5,2.7,2.6,2.8,2.3,2.7,2.4,2.8,2.8];
+    var tds = [471,476,480,474,482,478,469,485,488,479,483,505,498,486,477,481,484,490,473,476,482,487,480,483,495,488,491,502,479,486];
+    var ntu = [1.8,1.9,2.0,1.7,2.2,2.1,1.9,2.0,2.3,1.8,2.0,2.6,2.4,2.1,1.9,2.0,2.2,1.8,1.9,2.1,2.0,2.2,1.9,2.0,2.2,1.9,2.0,2.4,2.0,2.1];
+    var ptds = [33,34,35,33,36,34,32,35,36,34,35,38,37,35,34,34,35,36,33,34,35,36,34,34,36,35,35,37,33,34];
+    var days = feed.map(function (f, i) {
+      var day = i + 1;
+      return { label: day + ' Oct', full: day + ' Oct 2026', feed: f, pur: pur[i], rej: Math.round((f - pur[i]) * 10) / 10, tds: tds[i], ntu: ntu[i], ptds: ptds[i] };
+    });
+    var hl = ['11:00','13:00','15:00','17:00','19:00','21:00','23:00','01:00','03:00','05:00','07:00','09:00'];
+    var hf = [0.4,0,0.6,0.9,0.5,0,0,0,0.3,0.7,0.6,0.4], hp = [0.25,0,0.37,0.55,0.31,0,0,0,0.18,0.43,0.37,0.25];
+    var ht = [478,479,481,480,482,483,483,484,485,486,486,486], hn = [2.0,2.0,2.1,null,2.0,2.0,2.1,2.0,2.0,2.1,2.1,2.1], hpt = [34,34,33,34,34,34,34,34,33,34,34,34];
+    var hours = hl.map(function (l, i) {
+      var next = hl[(i + 1) % 12], dayName = i < 7 ? '29 Oct' : '30 Oct';
+      return { label: l, full: dayName + ', ' + l + '–' + next, feed: hf[i], pur: hp[i], rej: Math.round((hf[i] - hp[i]) * 100) / 100, tds: ht[i], ntu: hn[i], ptds: hpt[i] };
+    });
+    var runs = [
+      ['T-014', 29, '10:20 AM', 'Municipal supply', 'Routine daily run.'],
+      ['T-013', 28, '5:05 PM', 'Municipal supply', 'Turbidity reading went stale during the run, so no turbidity value was recorded.'],
+      ['T-012', 27, '9:40 AM', 'Borewell blend', 'Higher input TDS on a borewell blend. Recovery was below baseline; compare flow and pressure context before drawing conclusions.'],
+      ['T-011', 26, '3:12 PM', 'Municipal supply', 'Routine daily run.'],
+      ['T-010', 25, '11:30 AM', 'Municipal supply', 'Routine daily run.'],
+      ['T-009', 24, '10:05 AM', 'Municipal supply', 'Routine daily run.'],
+      ['T-008', 23, '4:40 PM', 'Municipal supply', 'Routine daily run.'],
+      ['T-007', 20, '9:25 AM', 'Municipal supply', 'First run after the ESP32 reconnected.'],
+      ['T-006', 17, '2:10 PM', 'Municipal supply', 'Routine daily run.'],
+      ['T-005', 14, '10:45 AM', 'Municipal supply', 'Routine daily run.'],
+      ['T-004', 11, '9:10 AM', 'Borewell blend', 'Borewell blend. Recovery below baseline; the tank reached capacity the same evening.'],
+      ['T-003', 8, '11:00 AM', 'Municipal supply', 'Routine daily run.']
+    ].map(function (r) {
+      var d = days[r[1]];
+      return { id: r[0], idx: r[1], date: d.full + ', ' + r[2], cond: r[3], notes: r[4], feed: d.feed, pur: d.pur, rej: d.rej, tds: d.tds, ntu: r[0] === 'T-013' ? null : d.ntu, ptds: d.ptds };
+    });
+    var reuse = [
+      { id: 'R-3', date: '28 Oct 2026, 6:40 PM', idx: 27, vol: 7.2, use: 'Floor cleaning' },
+      { id: 'R-2', date: '21 Oct 2026, 8:15 AM', idx: 20, vol: 6.0, use: 'Garden watering' },
+      { id: 'R-1', date: '13 Oct 2026, 7:50 AM', idx: 12, vol: 5.5, use: 'Toilet flushing' }
+    ];
+    this._data = { days: days, hours: hours, runs: runs, reuse: reuse };
+    return this._data;
+  }
+  csv(rows, cfg, rangeLong, hourly) {
+    var lines = ['# RejectWise export, ' + cfg.name + ', ' + rangeLong, '# Demo data: sample values for a prototype, not hardware measurements', '# Empty cells mean no reading was recorded; they are not zero', 'period,feed_L,purified_L,reject_generated_L,recovery_pct,input_tds_ppm,input_turbidity_NTU'];
+    rows.forEach(function (r) {
+      var rec = r.feed > 0 ? (r.pur / r.feed * 100).toFixed(1) : '';
+      var vd = hourly ? 2 : 1;
+      lines.push(['"' + r.full + '"', r.feed.toFixed(vd), r.pur.toFixed(vd), r.rej.toFixed(vd), rec, r.tds == null ? '' : r.tds, r.ntu == null ? '' : r.ntu.toFixed(1)].join(','));
+    });
+    return lines.join('\n') + '\n';
+  }
+  renderVals() {
+    var self = this, s = this.state, D = this.data();
+    var set = function (patch) { return function () { self.setState(patch); }; };
+    var cfg = s.settings[s.device], hasData = s.device === 'unit-01';
+    var sensorsOn = function (k) { return hasData && cfg.sensors[k] === 'installed'; };
+    var num = function (v, d) { var n = parseFloat(v); return isNaN(n) ? null : n; };
+    var baseLo = num(cfg.baseLo), baseHi = num(cfg.baseHi), capacity = num(cfg.capacity), threshold = num(cfg.threshold);
+    var cfgView = { baseLo: baseLo, baseHi: baseHi, capacity: capacity, threshold: threshold };
+    var f1 = function (v) { return v == null ? '—' : (Math.round(v * 10) / 10).toFixed(1); };
+
+    var range = s.range;
+    var rows = range === '24h' ? D.hours : range === '30d' ? D.days : D.days.slice(23);
+    var startIdx = range === '30d' ? 0 : range === '7d' ? 23 : 29;
+    var rangeShort = { '24h': 'last 24 hours', '7d': 'last 7 days', '30d': 'last 30 days' }[range];
+    var rangeLong = { '24h': '29 Oct 11:00 to 30 Oct 11:00', '7d': '24–30 Oct 2026', '30d': '1–30 Oct 2026' }[range];
+    var labelEvery = range === '30d' ? 3 : 1;
+    var aggLabel = { '24h': '24-hour aggregate recovery', '7d': '7-day aggregate recovery', '30d': '30-day aggregate recovery' }[range];
+    var aggShort = { '24h': '24-hour aggregate', '7d': '7-day aggregate', '30d': '30-day aggregate' }[range];
+    var sum = function (k) { return rows.reduce(function (a, r) { return a + (r[k] || 0); }, 0); };
+    var tot = { feed: sum('feed'), pur: sum('pur'), rej: sum('rej') };
+    tot.rec = tot.feed > 0 ? tot.pur / tot.feed * 100 : null;
+    tot.frac = tot.feed > 0 ? tot.rej / tot.feed * 100 : null;
+    tot.diff = f1(Math.abs(tot.feed - tot.pur - tot.rej) < 0.05 ? 0 : tot.feed - tot.pur - tot.rej);
+    var collected = tot.rej - (range === '30d' ? 1.2 : 0);
+    var reuseRows = D.reuse.filter(function (r) { return r.idx >= startIdx && range !== '24h'; });
+    var reused = reuseRows.reduce(function (a, r) { return a + r.vol; }, 0);
+
+    var openCount = s.alerts.filter(function (a) { return a.status !== 'resolved'; }).length;
+    var navigate = function (id) { self.setState({ page: id, menuOpen: false }); };
+    var go = function (id, extra) { return function (e) { if (e && e.preventDefault) e.preventDefault(); self.setState(Object.assign({ page: id, menuOpen: false }, extra || {})); }; };
+    var toast = function (tone, text) {
+      clearTimeout(self._tt);
+      self.setState({ toast: { tone: tone, text: text } });
+      self._tt = setTimeout(function () { self.setState({ toast: null }); }, 6000);
+    };
+
+    var pages = {
+      overview: ['Overview', 'Connection, water balance, tank and quality for the selected device and period.'],
+      live: ['Live monitoring', 'Current readings from each installed sensor and its health.'],
+      quality: ['Water quality', 'Input and product-water readings over the selected period.'],
+      recovery: ['Recovery analytics', 'How feed water divides into purified and reject water, and what happens to the reject.'],
+      trends: ['Performance trends', 'Recovery against the configured baseline, with context for any change.'],
+      history: ['Test history', 'Every recorded test run. Search, filter and open a run for its details.'],
+      alerts: ['Alerts', 'What happened, where, and what to check next.'],
+      reports: ['Reports', 'A summary of the selected period, ready to export as CSV.'],
+      settings: ['Settings', 'Device details, sensor configuration and alert thresholds for the selected device.']
+    };
+    var show = {}; Object.keys(pages).forEach(function (k) { show[k] = s.page === k && (hasData || k === 'settings' || k === 'alerts' || k === 'history'); });
+    if (!hasData) { show.alerts = false; show.history = false; }
+    var dataPage = ['overview', 'live', 'quality', 'recovery', 'trends', 'reports', 'alerts', 'history'].indexOf(s.page) >= 0;
+
+    var isBelow = function (r) { return r.feed > 0 && baseLo != null && r.pur / r.feed * 100 < baseLo; };
+    var recRows = rows.map(function (r) { return { label: r.label, full: r.full, value: r.feed > 0 ? Math.round(r.pur / r.feed * 1000) / 10 : null }; });
+    var belowDays = rows.filter(isBelow);
+    var flowRows = rows.filter(function (r) { return r.feed > 0; });
+    var lt = D.runs[0], ltRec = lt.pur / lt.feed * 100, ltBelow = baseLo != null && ltRec < baseLo;
+    var dayWord = range === '24h' ? 'two-hour periods' : 'days';
+    var perf = {
+      tone: ltBelow ? 'attention' : 'normal', state: ltBelow ? 'Change detected' : 'Within baseline',
+      summary: 'Latest test recovery ' + ltRec.toFixed(1) + '% (' + lt.id + ', ' + lt.date.replace(' 2026', '') + ') · ' + aggShort + ' recovery ' + f1(tot.rec) + '%',
+      note: belowDays.length === 0 ? 'No ' + dayWord + ' below the baseline in this period.' : belowDays.length + ' of ' + flowRows.length + ' ' + dayWord + ' below the baseline (' + belowDays.map(function (r) { return r.label; }).join(', ') + '). A prompt to check, not a diagnosis.'
+    };
+
+    var tankPct = hasData && cfg.sensors.level === 'installed' ? 72 : null;
+    var tank = tankPct == null ? { pct: null, tone: 'offline', state: 'Not configured' }
+      : threshold != null && tankPct >= threshold ? { pct: tankPct, tone: 'attention', state: 'Above alert level' } : { pct: tankPct, tone: 'normal', state: 'Below alert level' };
+    var maxR = Math.max(tot.rej, 0.1);
+    var rejectFlow = [
+      { label: 'Generated', value: f1(tot.rej), w: '100%', color: 'var(--series-reject)' },
+      { label: 'Collected', value: f1(collected), w: (collected / maxR * 100).toFixed(1) + '%', color: 'var(--series-reject)' },
+      { label: 'Reused', value: f1(reused), w: (reused / maxR * 100).toFixed(1) + '%', color: 'var(--forest)' }
+    ];
+    var notReused = collected - reused;
+    var rejectNote = (range === '30d' ? '1.2 L generated on 12 Oct was not collected while the tank was full. ' : '')
+      + (reused > 0 ? f1(Math.max(notReused, 0)) + ' L of the water collected in this period has not been logged as reused.' : 'No reuse logged in this period; none of the collected water is counted as reused.');
+
+    var ledger = [
+      { label: 'Feed water', swatch: 'var(--series-feed)', value: f1(tot.feed), unit: 'L', color: 'var(--ink)', note: 'Measured · ' + rangeShort },
+      { label: 'Purified', swatch: 'var(--series-purified)', value: f1(tot.pur), unit: 'L', color: 'var(--ink)', note: 'Measured · to the product tap' },
+      { label: 'Reject generated', swatch: 'var(--series-reject)', value: f1(tot.rej), unit: 'L', color: 'var(--ink)', note: 'Measured · ' + f1(tot.frac) + '% of feed' },
+      { label: aggLabel, swatch: 'transparent', value: f1(tot.rec), unit: '%', color: 'var(--forest)', note: 'Calculated · total purified ÷ total feed' }
+    ];
+
+    var latest = { inTds: [486, 'ppm'], inNtu: ['2.1', 'NTU'], prodTds: [34, 'ppm'], feedFlow: ['0.62', 'L/min'], rejFlow: ['0.24', 'L/min'], purFlow: [null, 'L/min'] };
+    var sensorDefs = [['inTds', 'Input TDS', 'quality'], ['inNtu', 'Input turbidity', 'quality'], ['prodTds', 'Product-water TDS', 'quality'], ['feedFlow', 'Feed flow', 'flow'], ['rejFlow', 'Reject flow', 'flow'], ['purFlow', 'Purified flow', 'flow']];
+    var sensors = sensorDefs.map(function (d) {
+      var on = sensorsOn(d[0]);
+      return { label: d[1], on: on, off: !on, value: latest[d[0]][0], unit: latest[d[0]][1], kind: 'Measured', where: '10:42 AM', bg: on ? 'var(--surface)' : 'var(--canvas)' };
+    });
+
+    var REQUIRED = [['feed', 'Feed volume'], ['pur', 'Purified volume'], ['rej', 'Reject volume'], ['tds', 'Input TDS'], ['ntu', 'Input turbidity']];
+    var missingOf = function (r) { return REQUIRED.filter(function (k) { return r[k[0]] == null; }).map(function (k) { return k[1]; }); };
+    var testRec = function (r) { return r.feed > 0 && r.pur != null ? r.pur / r.feed * 100 : null; };
+    var status = function (r) { var rr = testRec(r); return missingOf(r).length ? 'Incomplete' : (baseLo != null && rr != null && (rr < baseLo || (baseHi != null && rr > baseHi)) ? 'Change detected' : 'Within baseline'); };
+    var toneOf = function (st) { return st === 'Within baseline' ? 'normal' : st === 'Change detected' ? 'attention' : 'offline'; };
+    var testRow = function (r) { return { id: r.id, date: r.date, feed: r.feed.toFixed(1), pur: r.pur.toFixed(1), rej: r.rej.toFixed(1), tds: r.tds, ntu: r.ntu == null ? null : r.ntu.toFixed(1), rr: (r.pur / r.feed * 100).toFixed(1), note: status(r), cond: r.cond }; };
+    var testCols = [{ key: 'id', label: 'Test ID' }, { key: 'date', label: 'Date and time' }, { key: 'feed', label: 'Feed', unit: 'L', numeric: true }, { key: 'pur', label: 'Purified', unit: 'L', numeric: true }, { key: 'rej', label: 'Reject', unit: 'L', numeric: true }, { key: 'tds', label: 'Input TDS', unit: 'ppm', numeric: true }, { key: 'ntu', label: 'Turbidity', unit: 'NTU', numeric: true }, { key: 'rr', label: 'Test recovery', unit: '%', numeric: true }, { key: 'note', label: 'Status' }];
+    var openTest = function (row) { self.setState({ page: 'history', testSel: row.id, menuOpen: false }); };
+
+    var q = s.testQuery.trim().toLowerCase();
+    var filtered = D.runs.filter(function (r) {
+      if (s.testStatus !== 'all' && status(r) !== s.testStatus) return false;
+      if (s.testDate !== 'all') { var w = { w4: [23, 29], w3: [16, 22], w2: [9, 15], w1: [0, 8] }[s.testDate]; if (r.idx < w[0] || r.idx > w[1]) return false; }
+      if (q && (r.id + ' ' + r.notes + ' ' + r.cond + ' ' + r.date).toLowerCase().indexOf(q) < 0) return false;
+      return true;
+    });
+    var sel = D.runs.filter(function (r) { return r.id === s.testSel; })[0];
+    var testDetail = { on: !!sel };
+    if (sel) {
+      var st = status(sel), rr = sel.pur / sel.feed * 100;
+      var miss = missingOf(sel), reasons = [], reasonTitle = '', reasonBg = 'var(--canvas)';
+      if (st === 'Incomplete') {
+        reasonTitle = 'Why it is incomplete'; reasonBg = 'var(--canvas)';
+        reasons.push('Missing: ' + miss.join(', ') + '.');
+        var linked = s.alerts.filter(function (a) { return a.related === sel.id && a.kind === 'stale'; })[0];
+        if (linked) reasons.push('The sensor reading was stale during the run (alert ' + linked.id + '). The value was not estimated.');
+        reasons.push(rr != null ? 'Test recovery is still calculated because all three volumes were recorded.' : 'Test recovery cannot be calculated without feed and purified volumes.');
+      } else if (st === 'Change detected') {
+        reasonTitle = 'Why it was flagged'; reasonBg = 'var(--warning-soft)';
+        var gap = rr < baseLo ? (baseLo - rr) : (rr - baseHi);
+        reasons.push('Metric: test recovery ' + rr.toFixed(1) + '%, ' + gap.toFixed(1) + ' points ' + (rr < baseLo ? 'below the baseline low of ' + baseLo.toFixed(1) : 'above the baseline high of ' + baseHi.toFixed(1)) + '%.');
+        var others = D.runs.filter(function (o) { return o.id !== sel.id && o.idx < sel.idx && o.idx >= sel.idx - 14; }).map(function (o) { return o.tds; }).sort(function (a, b) { return a - b; });
+        if (others.length) { var med = others[Math.floor(others.length / 2)]; reasons.push('Context: input TDS ' + sel.tds + ' ppm against a median of ' + med + ' ppm for the ' + others.length + ' earlier runs in the previous 14 days (' + sel.cond.toLowerCase() + ').'); }
+        reasons.push('Recovery depends on source water, pressure, temperature and flow. Compare those before drawing conclusions.');
+      } else {
+        reasonTitle = 'Within baseline';
+        reasons.push('All required readings were recorded, and test recovery ' + rr.toFixed(1) + '% is inside ' + cfg.baseLo + '–' + cfg.baseHi + '%.');
+      }
+      testDetail = { on: true, id: sel.id, date: sel.date, cond: sel.cond, status: st, tone: toneOf(st), notes: sel.notes, reasons: reasons, reasonTitle: reasonTitle, reasonBg: reasonBg, facts: [
+        { k: 'Feed', v: sel.feed.toFixed(1) + ' L', color: 'var(--ink)' }, { k: 'Purified', v: sel.pur.toFixed(1) + ' L', color: 'var(--ink)' }, { k: 'Reject', v: sel.rej.toFixed(1) + ' L', color: 'var(--ink)' },
+        { k: 'Input TDS', v: sel.tds + ' ppm', color: 'var(--ink)' }, { k: 'Input turbidity', v: sel.ntu == null ? 'Not recorded' : sel.ntu.toFixed(1) + ' NTU', color: sel.ntu == null ? 'var(--ink-secondary)' : 'var(--ink)' },
+        { k: 'Product-water TDS', v: sel.ptds + ' ppm', color: 'var(--ink)' },
+        { k: 'Test recovery (calculated)', v: rr.toFixed(1) + '%' + (baseLo != null && rr < baseLo ? ', below baseline' : ''), color: 'var(--ink)' },
+        { k: 'Reject fraction (calculated)', v: (sel.rej / sel.feed * 100).toFixed(1) + '%', color: 'var(--ink)' },
+        { k: 'Balance difference (calculated)', v: f1(Math.abs(sel.feed - sel.pur - sel.rej) < 0.05 ? 0 : sel.feed - sel.pur - sel.rej) + ' L', color: 'var(--ink)' }
+      ] };
+    }
+
+    var thrText = function (a) { return a.thrKey === 'freshness' ? 'Freshness window ' + cfg.freshness + ' min (configured)' : a.thrKey === 'tank' ? cfg.threshold + '% alert level (configured)' : a.thrKey === 'baseline' ? 'Baseline ' + cfg.baseLo + '–' + cfg.baseHi + '% (configured)' : ''; };
+    var AL = s.alerts;
+    var isActive = function (a) { return a.status !== 'resolved'; };
+    var autoClears = function (a) { return a.kind !== 'test'; };
+    var updateAlert = function (id, status, text) { return function () {
+      var now = self.nowLabel();
+      self.setState({ alerts: self.state.alerts.map(function (a) { return a.id !== id ? a : Object.assign({}, a, { status: status, events: a.events.concat([{ t: now, text: text }]) }); }) });
+    }; };
+    var noteFor = function (a) {
+      var last = a.events[a.events.length - 1];
+      if (a.status === 'resolved') return last.t + ' · ' + last.text;
+      if (autoClears(a)) return 'Clears automatically when the condition no longer holds; it cannot be resolved by hand while it persists.' + (a.recurrenceOf ? ' New occurrence of ' + a.recurrenceOf + '.' : '');
+      return a.status === 'acknowledged' ? 'Acknowledged ' + last.t + '. Resolve after reviewing the run.' : 'Needs review. Test flags are resolved by a person.';
+    };
+    var alertItem = function (a) {
+      return { severity: a.severity, title: a.title, time: a.raised.replace(' 2026', ''), subsystem: a.subsystem, observed: a.observed, threshold: thrText(a), status: a.status, note: noteFor(a), next: a.next,
+        open: go('alerts', { alertSel: a.id, alertTab: isActive(a) ? 'active' : 'resolved' }),
+        ack: a.status === 'open' ? updateAlert(a.id, 'acknowledged', 'Acknowledged.') : undefined,
+        resolve: isActive(a) && !autoClears(a) ? updateAlert(a.id, 'resolved', 'Resolved by reviewer.') : undefined };
+    };
+    var activeAlerts = AL.filter(isActive), historyAlerts = AL.filter(function (a) { return !isActive(a); });
+    var alertList = (s.alertTab === 'active' ? activeAlerts : s.alertTab === 'resolved' ? historyAlerts : activeAlerts.concat(historyAlerts))
+      .filter(function (a) { return s.alertSev === 'all' || a.severity === s.alertSev; });
+    var aSel = AL.filter(function (a) { return a.id === s.alertSel; })[0];
+    var alertDetail = { on: false };
+    if (aSel) {
+      var ast = aSel.status;
+      alertDetail = { on: true, id: aSel.id, title: aSel.title, time: 'Raised ' + aSel.raised, detail: aSel.detail, sevLabel: { critical: 'Critical', warning: 'Warning', info: 'Info' }[aSel.severity],
+        statusLabel: { open: 'Active', acknowledged: 'Acknowledged, still active', resolved: 'Resolved' }[ast],
+        tone: ast === 'open' ? ({ critical: 'critical', warning: 'attention', info: 'info' }[aSel.severity]) : ast === 'resolved' ? 'normal' : 'offline', icon: ast === 'acknowledged' ? 'check' : undefined,
+        facts: [{ k: 'Subsystem', v: aSel.subsystem }, { k: 'Observed', v: aSel.observed }].concat(aSel.thrKey ? [{ k: 'Threshold', v: thrText(aSel) }] : []).concat([{ k: 'Raised', v: aSel.raised }]).concat(isActive(aSel) ? [{ k: 'Next check', v: aSel.next }] : []).concat(aSel.recurrenceOf ? [{ k: 'Recurrence', v: 'New occurrence of ' + aSel.recurrenceOf }] : []),
+        events: aSel.events.slice().reverse(),
+        hasTest: !!aSel.related, related: aSel.related, openTest: go('history', { testSel: aSel.related }),
+        canAck: ast === 'open', ack: updateAlert(aSel.id, 'acknowledged', 'Acknowledged.'),
+        canResolve: isActive(aSel) && !autoClears(aSel), resolve: updateAlert(aSel.id, 'resolved', 'Resolved by reviewer.'),
+        autoNote: isActive(aSel) && autoClears(aSel), resolvedNote: !isActive(aSel) };
+    }
+
+    var periodTests = D.runs.filter(function (r) { return range !== '24h' ? r.idx >= startIdx : r.idx === 29; }).map(function (r) {
+      return { id: r.id, date: r.date, tds: r.tds, ptds: sensorsOn('prodTds') ? r.ptds : null, red: sensorsOn('prodTds') ? ((r.tds - r.ptds) / r.tds * 100).toFixed(1) : null, ntu: r.ntu == null ? null : r.ntu.toFixed(1), note: r.cond };
+    });
+
+    var draft = s.draft, err = {};
+    var dn = function (k) { return parseFloat(draft[k]); };
+    if (!String(draft.name).trim()) err.name = 'Enter a device name.';
+    if (!(dn('capacity') > 0)) err.capacity = 'Enter a capacity above 0 L.';
+    if (!(dn('threshold') >= 50 && dn('threshold') <= 100)) err.threshold = 'Use a level from 50 to 100%.';
+    if (!(dn('freshness') >= 1 && dn('freshness') <= 1440)) err.freshness = 'Use 1 to 1440 minutes.';
+    if (!(dn('baseLo') > 0 && dn('baseLo') < 100)) err.baseLo = 'Use a value between 0 and 100%.';
+    if (!(dn('baseHi') > dn('baseLo') && dn('baseHi') <= 100)) err.baseHi = 'Must be above the low value and at most 100%.';
+    var dirty = JSON.stringify(draft) !== JSON.stringify(cfg), hasErr = Object.keys(err).length > 0;
+    var setDraft = function (k) { return function (e) { var n = Object.assign({}, self.state.draft); n[k] = e && e.target ? e.target.value : e; self.setState({ draft: n }); }; };
+    var sensorLabels = [['inTds', 'Input TDS sensor'], ['inNtu', 'Input turbidity sensor'], ['prodTds', 'Product-water TDS sensor'], ['feedFlow', 'Feed flow sensor'], ['rejFlow', 'Reject flow sensor'], ['purFlow', 'Purified flow sensor'], ['level', 'Tank level sensor'], ['pressure', 'Pressure sensor']];
+
+    var deviceName = cfg.name;
+    var liveSensor = function (k, label, icon, note) {
+      var on = sensorsOn(k), v = latest[k] || [null, ''];
+      return { label: label, icon: icon, value: on ? v[0] : null, unit: v[1], state: on ? 'ok' : 'unavailable', ts: on ? '30 Oct, 10:42 AM' : '', dl: on ? 'demo' : undefined, note: on ? (note || 'Last sample, not live') : 'Not installed on this device' };
+    };
+    var healthRows = sensorLabels.map(function (l) {
+      var on = sensorsOn(l[0]);
+      return { id: l[0], sensor: l[1].replace(' sensor', ''), state: on ? (l[0] === 'inNtu' ? 'Online · stale once on 29 Oct' : 'Online') : 'Not configured', last: on ? '30 Oct, 10:42 AM' : null, origin: on ? 'Demo data' : null };
+    });
+
+    var refresh = function () {
+      var t = new Date(), hh = t.getHours(), mm = String(t.getMinutes()).padStart(2, '0');
+      var label = (hh % 12 || 12) + ':' + mm + (hh < 12 ? ' AM' : ' PM');
+      self.setState({ checkedAt: label, alerts: self.syncAlerts(self.state.alerts, self.state.settings) });
+      toast('info', hasData ? 'Demo mode: no live data source is connected, so readings were not updated. Alert conditions were re-checked.' : 'No device connected for ' + deviceName + '.');
+    };
+    var exportCsv = function () {
+      if (!hasData) return;
+      var name = 'rejectwise-' + s.device + '-' + range + '-demo.csv';
+      try {
+        var blob = new Blob([self.csv(rows, cfg, rangeLong, range === '24h')], { type: 'text/csv;charset=utf-8' });
+        var url = URL.createObjectURL(blob), link = document.createElement('a');
+        link.href = url; link.download = name; document.body.appendChild(link); link.click(); link.remove();
+        setTimeout(function () { URL.revokeObjectURL(url); }, 2000);
+        toast('success', 'Downloaded ' + name + ' (' + rows.length + ' rows, Demo data).');
+      } catch (e) { toast('danger', 'The CSV could not be downloaded in this view.'); }
+    };
+
+    return {
+      yes: true, page: s.page, show: show, hasData: hasData, noData: !hasData, showEmpty: !hasData && dataPage,
+      menuClass: s.menuOpen ? 'is-open' : '', openMenu: set({ menuOpen: true }), closeMenu: set({ menuOpen: false }),
+      navigate: function (id) { if (id === 'settings') self.setState({ page: id, menuOpen: false, draft: JSON.parse(JSON.stringify(self.state.settings[self.state.device])) }); else navigate(id); },
+      goAlerts: go('alerts'), goRecovery: go('recovery'), goLive: go('live'), goTrends: go('trends'), goHistory: go('history', { testSel: null }),
+      goSensors: go('settings', { settingsTab: 'sensors', draft: JSON.parse(JSON.stringify(cfg)) }),
+      crumbs: [deviceName, pages[s.page][0]], pageTitle: pages[s.page][0], pageDesc: pages[s.page][1],
+      navCounts: openCount ? { alerts: openCount } : {}, openCount: openCount,
+      openLabel: openCount + ' active · ' + (s.alerts.length - openCount) + ' resolved',
+      sideConn: hasData ? 'demo' : 'disconnected', deviceName: deviceName,
+      connDot: hasData ? 'var(--ink-secondary)' : 'var(--danger)',
+      connLabel: hasData ? 'Demo mode · ESP32 not connected' : 'Not set up · no device connected',
+      connDetail: hasData ? 'Last sample 30 Oct 2026, 10:42 AM' : 'No readings received',
+      checkedLabel: s.checkedAt ? 'Checked ' + s.checkedAt + ', no live source' : '',
+      deviceOptions: [{ value: 'unit-01', label: s.settings['unit-01'].name }, { value: 'unit-02', label: s.settings['unit-02'].name + ' (not set up)' }],
+      device: s.device,
+      changeDevice: function (e) { var v = e.target.value; self.setState({ device: v, draft: JSON.parse(JSON.stringify(self.state.settings[v])), testSel: null, checkedAt: null }); },
+      rangeOptions: [{ value: '24h', label: 'Last 24 hours' }, { value: '7d', label: 'Last 7 days' }, { value: '30d', label: 'Last 30 days' }],
+      range: range, changeRange: function (e) { self.setState({ range: e.target.value }); },
+      showRange: ['overview', 'quality', 'recovery', 'trends', 'reports'].indexOf(s.page) >= 0,
+      showRefresh: ['overview', 'live'].indexOf(s.page) >= 0, showExport: ['overview', 'reports'].indexOf(s.page) >= 0,
+      exportVariant: s.page === 'reports' ? 'primary' : 'secondary',
+      refresh: refresh, exportCsv: exportCsv,
+      toastOn: !!s.toast, toast: s.toast || { tone: 'info', text: '' }, closeToast: set({ toast: null }),
+      cfg: cfgView, rows: rows, chartView: s.chartView, labelEvery: labelEvery, rangeShort: rangeShort, rangeLong: rangeLong,
+      heroChartH: this.vw >= 1280 ? 470 : this.vw >= 640 ? 340 : 260,
+      recCaption: (range === '24h' ? 'Recovery per 2 hours, %' : 'Daily recovery rate, %') + ' · ' + rangeLong,
+      recSeries: range === '24h' ? '2-hour recovery' : 'Daily recovery', recUnit: range === '24h' ? 'period' : 'day',
+      chartCaption: (s.chartView === 'volume' ? (range === '24h' ? 'Volume per 2 hours, L' : 'Daily volume, L') : (range === '24h' ? 'Recovery per 2 hours, %' : 'Daily recovery rate, %')) + ' · ' + rangeLong,
+      viewTabs: [{ id: 'volume', label: 'Volume' }, { id: 'recovery', label: 'Recovery rate' }], changeView: function (id) { self.setState({ chartView: id }); },
+      chartLegend: s.chartView === 'volume'
+        ? [{ label: 'Purified', color: 'var(--series-purified)' }, { label: 'Reject', color: 'var(--series-reject)' }, { label: 'Bar height = feed (label above)', color: 'transparent' }]
+        : [{ label: 'Recovery rate', color: 'var(--series-purified)' }, { label: 'Below baseline', color: 'var(--warning)' }, { label: 'Baseline range', color: 'var(--forest-soft)' }],
+      tot: tot, ledger: ledger, tank: tank, rejectFlow: rejectFlow, rejectNote: rejectNote, sensors: sensors, perf: perf, recRows: recRows,
+      recentAlerts: activeAlerts.concat(historyAlerts).slice(0, 3).map(alertItem),
+      testCols: testCols, latestTests: D.runs.slice(0, 5).map(testRow), openTest: openTest,
+      liveNote: hasData ? 'No live readings are arriving. Values below are the last Demo data sample from 30 Oct 2026, 10:42 AM and will not change until the device connects. Use Refresh to check again.' : '',
+      liveGroups: [
+        { title: 'Water quality', items: [liveSensor('inTds', 'Input TDS', 'quality'), liveSensor('inNtu', 'Input turbidity', 'quality'), liveSensor('prodTds', 'Product-water TDS', 'quality', 'Optional sensor')] },
+        { title: 'Flow', items: [liveSensor('feedFlow', 'Feed flow', 'flow'), liveSensor('rejFlow', 'Reject flow', 'flow'), liveSensor('purFlow', 'Purified flow', 'flow')] }
+      ],
+      healthCols: [{ key: 'sensor', label: 'Sensor' }, { key: 'state', label: 'Status' }, { key: 'last', label: 'Last reading' }, { key: 'origin', label: 'Origin' }], healthRows: healthRows,
+      qualityCharts: [
+        { title: 'Input TDS', series: 'Input TDS', unit: 'ppm', stat: 'Range ' + Math.min.apply(null, rows.map(function (r) { return r.tds; })) + '–' + Math.max.apply(null, rows.map(function (r) { return r.tds; })) + ' ppm', desc: 'Dissolved solids in the feed water.', rows: rows.map(function (r) { return { label: r.label, full: r.full, value: r.tds }; }), min: 400, max: 520, step: 40, decimals: 0, color: 'var(--series-feed)', on: sensorsOn('inTds'), off: !sensorsOn('inTds') },
+        { title: 'Input turbidity', series: 'Input turbidity', unit: 'NTU', stat: range === '24h' ? '1 gap, 17:00 bucket' : 'No gaps in daily averages', desc: 'Cloudiness from suspended particles. Gaps mean no reading was recorded.', rows: rows.map(function (r) { return { label: r.label, full: r.full, value: r.ntu }; }), min: 0, max: 3, step: 1, decimals: 1, color: 'var(--series-feed)', on: sensorsOn('inNtu'), off: !sensorsOn('inNtu') },
+        { title: 'Product-water TDS', series: 'Product-water TDS', unit: 'ppm', stat: 'Optional sensor', desc: 'Dissolved solids after purification.', rows: rows.map(function (r) { return { label: r.label, full: r.full, value: r.ptds }; }), min: 0, max: 50, step: 10, decimals: 0, color: 'var(--series-purified)', on: sensorsOn('prodTds'), off: !sensorsOn('prodTds') },
+        { title: 'Product-water turbidity', series: '', unit: 'NTU', stat: 'Not installed', desc: 'No turbidity sensor on the product line.', rows: [], min: 0, max: 1, step: 1, decimals: 0, color: '', on: false, off: true }
+      ],
+      qualityCols: [{ key: 'id', label: 'Test ID' }, { key: 'date', label: 'Date and time' }, { key: 'tds', label: 'Input TDS', unit: 'ppm', numeric: true }, { key: 'ptds', label: 'Product TDS', unit: 'ppm', numeric: true }, { key: 'red', label: 'TDS reduction', unit: '%', numeric: true }, { key: 'ntu', label: 'Input turbidity', unit: 'NTU', numeric: true }, { key: 'note', label: 'Condition' }],
+      periodTests: periodTests,
+      recLedger: [
+        { label: 'Feed', value: f1(tot.feed) + ' L', note: 'Measured', color: 'var(--ink)' },
+        { label: 'Purified', value: f1(tot.pur) + ' L', note: 'Measured', color: 'var(--ink)' },
+        { label: 'Reject generated', value: f1(tot.rej) + ' L', note: 'Measured', color: 'var(--ink)' },
+        { label: 'Reject collected', value: f1(collected) + ' L', note: 'Measured at tank', color: 'var(--ink)' },
+        { label: 'Reject reused', value: f1(reused) + ' L', note: 'Logged', color: 'var(--ink)' },
+        { label: aggLabel, value: f1(tot.rec) + '%', note: 'Total purified ÷ total feed', color: 'var(--forest)' },
+        { label: 'Reject fraction', value: f1(tot.frac) + '%', note: 'Reject generated ÷ feed', color: 'var(--ink)' },
+        { label: 'Balance difference', value: tot.diff + ' L', note: 'Feed − purified − reject generated', color: 'var(--ink)' }
+      ],
+      reuseLog: D.reuse.map(function (r) { return { use: r.use, vol: r.vol.toFixed(1), date: r.date.replace(' 2026', ''), inRange: range !== '24h' && r.idx >= startIdx ? 'In period' : 'Before period' }; }),
+      reuseCols: [{ key: 'date', label: 'Date and time' }, { key: 'vol', label: 'Volume', unit: 'L', numeric: true }, { key: 'use', label: 'Non-potable purpose' }],
+      reuseRows: reuseRows.map(function (r) { return { id: r.id, date: r.date, vol: r.vol.toFixed(1), use: r.use }; }),
+      tdsRows: rows.map(function (r) { return { label: r.label, full: r.full, value: r.tds }; }),
+      flagCols: [{ key: 'day', label: 'Period' }, { key: 'rr', label: 'Daily recovery', unit: '%', numeric: true }, { key: 'tds', label: 'Input TDS', unit: 'ppm', numeric: true }, { key: 'check', label: 'Suggested check' }],
+      flagRows: belowDays.map(function (r) { return { id: r.full, day: r.full, rr: (r.pur / r.feed * 100).toFixed(1), tds: r.tds, check: r.tds >= 500 ? 'Compare source water' : 'Check flow, calibration' }; }),
+      testQuery: s.testQuery, changeQuery: function (e) { self.setState({ testQuery: e.target.value }); },
+      statusOptions: [{ value: 'all', label: 'All statuses' }, { value: 'Within baseline', label: 'Within baseline' }, { value: 'Change detected', label: 'Change detected' }, { value: 'Incomplete', label: 'Incomplete' }],
+      testStatus: s.testStatus, changeStatus: function (e) { self.setState({ testStatus: e.target.value }); },
+      dateOptions: [{ value: 'all', label: 'All dates' }, { value: 'w4', label: '24–30 Oct' }, { value: 'w3', label: '17–23 Oct' }, { value: 'w2', label: '10–16 Oct' }, { value: 'w1', label: '1–9 Oct' }],
+      testDate: s.testDate, changeDate: function (e) { self.setState({ testDate: e.target.value }); },
+      statusDefs: [
+        { tone: 'normal', label: 'Within baseline', text: 'All required readings were recorded and test recovery is inside the configured baseline.' },
+        { tone: 'offline', label: 'Incomplete', text: 'At least one required reading is missing. Values that were recorded are still shown; missing ones are never filled in.' },
+        { tone: 'attention', label: 'Change detected', text: 'Test recovery is outside the configured baseline. A prompt to investigate, not a diagnosis of filter condition.' }
+      ],
+      filtersOn: !!(q || s.testStatus !== 'all' || s.testDate !== 'all'), clearFilters: set({ testQuery: '', testStatus: 'all', testDate: 'all' }),
+      historyCount: filtered.length + ' of ' + D.runs.length + ' runs',
+      historyCols: sel ? [testCols[0], testCols[1], testCols[2], testCols[7], testCols[8]] : testCols,
+      testMaster: sel ? 'master' : 'solo', alertMaster: aSel ? 'master' : 'solo',
+      filteredTests: filtered.map(testRow), testSel: s.testSel, testDetail: testDetail, closeTest: set({ testSel: null }),
+      alertTabs: [{ id: 'active', label: 'Active', count: activeAlerts.length }, { id: 'resolved', label: 'Resolved', count: historyAlerts.length }, { id: 'all', label: 'All', count: AL.length }],
+      alertTab: s.alertTab, changeAlertTab: function (id) { self.setState({ alertTab: id }); },
+      sevOptions: [{ value: 'all', label: 'All severities' }, { value: 'critical', label: 'Critical' }, { value: 'warning', label: 'Warning' }, { value: 'info', label: 'Info' }],
+      alertSev: s.alertSev, changeSev: function (e) { self.setState({ alertSev: e.target.value }); },
+      alertList: alertList.map(alertItem), alertsEmpty: alertList.length === 0,
+      alertsEmptyTitle: s.alertTab === 'active' ? 'No active alerts' : 'No alerts here',
+      alertsEmptyText: s.alertTab === 'active' ? 'Every recorded condition has cleared. Resolved alerts stay under Resolved.' : 'Nothing matches this status and severity.', alertDetail: alertDetail, closeAlert: set({ alertSel: null }),
+      reportFacts: [
+        { label: 'Test runs', value: String(periodTests.length), note: 'Recorded in the period' },
+        { label: 'Days below baseline', value: String(belowDays.length), note: 'Flags to investigate, not failures' },
+        { label: 'Alerts raised', value: String(AL.filter(function (a) { return range === '30d' || (range === '7d' ? a.day >= 24 : a.day >= 29); }).length), note: 'Of any severity, including resolved' }
+      ],
+      reportCols: [{ key: 'full', label: 'Period' }, { key: 'feed', label: 'Feed', unit: 'L', numeric: true }, { key: 'pur', label: 'Purified', unit: 'L', numeric: true }, { key: 'rej', label: 'Reject', unit: 'L', numeric: true }, { key: 'rr', label: 'Period recovery', unit: '%', numeric: true }, { key: 'tds', label: 'Input TDS', unit: 'ppm', numeric: true }, { key: 'ntu', label: 'Turbidity', unit: 'NTU', numeric: true }],
+      reportRows: rows.map(function (r) { var vd = range === '24h' ? 2 : 1; return { id: r.full, full: r.full, feed: r.feed.toFixed(vd), pur: r.pur.toFixed(vd), rej: r.rej.toFixed(vd), rr: r.feed > 0 ? (r.pur / r.feed * 100).toFixed(1) : null, tds: r.tds, ntu: r.ntu == null ? null : r.ntu.toFixed(1) }; }),
+      settingsTabs: [{ id: 'device', label: 'Device' }, { id: 'sensors', label: 'Sensors' }, { id: 'thresholds', label: 'Thresholds' }, { id: 'privacy', label: 'Data and privacy' }],
+      settingsTab: s.settingsTab, changeSettingsTab: function (id) { self.setState({ settingsTab: id }); },
+      st: { device: s.settingsTab === 'device', sensors: s.settingsTab === 'sensors', thresholds: s.settingsTab === 'thresholds', privacy: s.settingsTab === 'privacy', editable: s.settingsTab !== 'privacy' },
+      draft: draft, err: err,
+      setName: setDraft('name'), setLocation: setDraft('location'), setCapacity: setDraft('capacity'), setThreshold: setDraft('threshold'), setFreshness: setDraft('freshness'), setBaseLo: setDraft('baseLo'), setBaseHi: setDraft('baseHi'),
+      sensorStateOptions: [{ value: 'installed', label: 'Installed' }, { value: 'none', label: 'Not configured' }],
+      sensorRows: sensorLabels.map(function (l) {
+        return { label: l[1], aria: l[1] + ' status', value: draft.sensors[l[0]], cal: draft.sensors[l[0]] === 'installed' ? (l[0] === 'level' || l[0].indexOf('Flow') > 0 ? 'Calibrated 12 Oct 2026 · Demo data' : 'Calibrated 12 Oct 2026 · Demo data') : 'No calibration on record',
+          change: function (e) { var n = JSON.parse(JSON.stringify(self.state.draft)); n.sensors[l[0]] = e.target.value; self.setState({ draft: n }); } };
+      }),
+      saveDisabled: !dirty || hasErr, notDirty: !dirty,
+      saveNote: hasErr && dirty ? 'Fix the highlighted fields to save.' : dirty ? 'Unsaved changes for ' + deviceName + '.' : (s.savedAt ? 'Saved at ' + s.savedAt + ' for this session.' : 'No unsaved changes.'),
+      saveSettings: function () {
+        var n = JSON.parse(JSON.stringify(self.state.settings)); n[self.state.device] = JSON.parse(JSON.stringify(self.state.draft));
+        var t = new Date(); self.setState({ settings: n, alerts: self.syncAlerts(self.state.alerts, n), savedAt: (t.getHours() % 12 || 12) + ':' + String(t.getMinutes()).padStart(2, '0') + (t.getHours() < 12 ? ' AM' : ' PM') });
+        toast('success', 'Settings saved for ' + self.state.draft.name + '.');
+      },
+      discardSettings: function () { self.setState({ draft: JSON.parse(JSON.stringify(self.state.settings[self.state.device])) }); },
+      confirmReset: s.confirmReset, askReset: set({ confirmReset: true }), cancelReset: set({ confirmReset: false }),
+      doReset: function () { var d = self.defaults(); self.setState({ settings: d, alerts: self.syncAlerts(self.state.alerts, d), draft: JSON.parse(JSON.stringify(d[self.state.device])), confirmReset: false }); toast('success', 'Default settings restored.'); }
+    };
+  }
+}
+</script>
+</body>
+</html>

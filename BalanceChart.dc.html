@@ -1,0 +1,136 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Water balance chart</title>
+<script src="./vendor/react.js"></script>
+<script src="./vendor/react-dom.js"></script>
+<script src="./support.js"></script>
+<link rel="stylesheet" href="ds/rejectwise/tokens.css">
+<link rel="stylesheet" href="ds/rejectwise/components/bundle.css">
+<script src="ds/rejectwise/components/bundle.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&amp;display=swap">
+<style>
+body { margin: 0; }
+</style>
+</helmet>
+<div style="width: 100%; font-family: var(--font-sans); color: var(--ink);">
+  <div style="display: grid; grid-template-columns: 40px minmax(0, 1fr); grid-template-rows: {{plotH}} 26px; column-gap: 10px; padding-top: 10px;">
+    <div style="position: relative; font-family: 'IBM Plex Mono', ui-monospace, monospace; font-size: 11px; color: var(--ink-secondary);" aria-hidden="true">
+      <sc-for list="{{ticks}}" as="t" hint-placeholder-count="6">
+        <span style="position: absolute; right: 0; bottom: {{t.pos}}; transform: translateY(50%); line-height: 1; white-space: nowrap;">{{t.label}}</span>
+      </sc-for>
+    </div>
+    <div style="position: relative; border-bottom: 1px solid var(--ink-secondary);">
+      <sc-for list="{{ticks}}" as="t" hint-placeholder-count="6">
+        <div style="position: absolute; left: 0; right: 0; bottom: {{t.pos}}; border-top: 1px solid {{t.line}};"></div>
+      </sc-for>
+      <sc-if value="{{isRecovery}}" hint-placeholder-val="{{false}}">
+        <div style="position: absolute; left: 0; right: 0; bottom: {{bandBottom}}; height: {{bandHeight}}; background: var(--forest-soft); opacity: 0.75;"></div>
+        <span style="position: absolute; right: 6px; bottom: {{bandTop}}; transform: translateY(-4px); font-family: 'IBM Plex Mono', ui-monospace, monospace; font-size: 10.5px; color: var(--forest);">baseline {{baseText}}</span>
+      </sc-if>
+      <div onMouseLeave="{{leave}}" style="position: absolute; inset: 0; display: flex; gap: {{gap}};">
+        <sc-for list="{{cols}}" as="c" hint-placeholder-count="7">
+          <button type="button" aria-label="{{c.aria}}" onMouseEnter="{{c.pick}}" onFocus="{{c.pick}}" onBlur="{{leave}}" onClick="{{c.pick}}" style="all: unset; position: relative; flex: 1 1 0; min-width: 0; height: 100%; display: flex; flex-direction: column; justify-content: flex-end; align-items: center; background: {{c.bg}}; cursor: crosshair;">
+            <sc-if value="{{c.showTop}}" hint-placeholder-val="{{false}}">
+              <span style="position: absolute; left: 0; right: 0; text-align: center; bottom: calc({{c.topH}} + 5px); font-family: 'IBM Plex Mono', ui-monospace, monospace; font-size: 10.5px; color: {{c.topColor}}; line-height: 1;">{{c.topLabel}}</span>
+            </sc-if>
+            <div style="width: {{barW}}; max-width: 34px; height: 100%; display: flex; flex-direction: column; justify-content: flex-end; gap: {{c.segGap}};">
+              <div style="height: {{c.upperH}}; background: {{c.upperColor}}; border-radius: 2px 2px 0 0;"></div>
+              <div style="height: {{c.lowerH}}; background: {{c.lowerColor}};"></div>
+            </div>
+          </button>
+        </sc-for>
+      </div>
+      <sc-if value="{{tipOn}}" hint-placeholder-val="{{false}}">
+      <div style="position: absolute; top: 4px; left: {{tipLeft}}; width: 188px; box-sizing: border-box; padding: 10px 12px; background: var(--ink); color: var(--surface); border-radius: 6px; font-size: 12px; line-height: 1.5; pointer-events: none; box-shadow: var(--shadow-popover);">
+        <div style="font-weight: 600; margin-bottom: 4px;">{{tip.full}}</div>
+        <sc-for list="{{tip.lines}}" as="l" hint-placeholder-count="4">
+          <div style="display: flex; justify-content: space-between; gap: 12px; align-items: center;">
+            <span style="display: flex; align-items: center; gap: 6px; color: var(--mineral);"><span style="width: 8px; height: 8px; border-radius: 1px; background: {{l.color}};"></span>{{l.label}}</span>
+            <span style="font-family: 'IBM Plex Mono', ui-monospace, monospace; font-weight: 500;">{{l.value}}</span>
+          </div>
+        </sc-for>
+      </div>
+      </sc-if>
+    </div>
+    <div style="font-family: 'IBM Plex Mono', ui-monospace, monospace; font-size: 11px; color: var(--ink-secondary); align-self: end; text-align: right;" aria-hidden="true">{{unitLabel}}</div>
+    <div style="display: flex; gap: {{gap}}; align-items: flex-end;" aria-hidden="true">
+      <sc-for list="{{cols}}" as="c" hint-placeholder-count="7">
+        <span class="{{c.labelClass}}" style="flex: 1 1 0; min-width: 0; text-align: center; font-family: 'IBM Plex Mono', ui-monospace, monospace; font-size: 11px; color: var(--ink-secondary); white-space: nowrap; overflow: visible;">{{c.label}}</span>
+      </sc-for>
+    </div>
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"rows":{"editor":null},"view":{"editor":"enum","options":["volume","recovery"],"default":"volume"},"baseLo":{"editor":null},"baseHi":{"editor":null},"height":{"editor":null},"labelEvery":{"editor":null},"$preview":{"width":880,"height":320}}'>
+class Component extends DCLogic {
+  constructor(props) { super(props); this.state = { hov: null }; }
+  renderVals() {
+    var self = this;
+    var rows = this.props.rows || [
+      { label: '24 Oct', full: '24 Oct 2026', feed: 4.2, pur: 2.6, rej: 1.6 }, { label: '25 Oct', full: '25 Oct 2026', feed: 4.6, pur: 2.8, rej: 1.8 },
+      { label: '26 Oct', full: '26 Oct 2026', feed: 3.8, pur: 2.3, rej: 1.5 }, { label: '27 Oct', full: '27 Oct 2026', feed: 4.4, pur: 2.7, rej: 1.7 },
+      { label: '28 Oct', full: '28 Oct 2026', feed: 4.0, pur: 2.4, rej: 1.6 }, { label: '29 Oct', full: '29 Oct 2026', feed: 4.5, pur: 2.8, rej: 1.7 },
+      { label: '30 Oct', full: '30 Oct 2026', feed: 4.5, pur: 2.8, rej: 1.7 }
+    ];
+    var view = this.props.view || 'volume', isRec = view === 'recovery';
+    var lo = this.props.baseLo != null ? this.props.baseLo : 60.5, hi = this.props.baseHi != null ? this.props.baseHi : 63.0;
+    var every = this.props.labelEvery || 1, n = rows.length;
+    var active = this.state.hov != null && this.state.hov < n;
+    var hov = active ? this.state.hov : n - 1;
+    var dec = function (v, d) { return v == null ? '—' : Number(v).toFixed(d); };
+    var vd = rows.some(function (r) { return r.feed > 0 && r.feed < 1; }) ? 2 : 1;
+    var top, step, min = 0;
+    if (isRec) { min = 56; top = 66; step = 2; }
+    else {
+      var maxV = Math.max.apply(null, rows.map(function (r) { return r.feed || 0; }));
+      step = maxV <= 1.2 ? 0.25 : maxV <= 2.5 ? 0.5 : 1;
+      top = Math.max(step, Math.ceil(maxV * 1.12 / step) * step);
+    }
+    var span = top - min, pct = function (v) { return Math.max(0, Math.min(100, (v - min) / span * 100)).toFixed(2) + '%'; };
+    var ticks = [];
+    for (var v = min; v <= top + 1e-9; v += step) ticks.push({ label: isRec ? String(Math.round(v)) : (step < 1 ? v.toFixed(2) : String(Math.round(v))), pos: pct(v), line: v === min ? 'transparent' : 'var(--border)' });
+    var cols = rows.map(function (r, i) {
+      var has = r.feed > 0, rec = has ? r.pur / r.feed * 100 : null, below = rec != null && rec < lo;
+      var c = { label: i % every === 0 ? r.label : '', labelClass: i % (every * 2) === 0 ? '' : 'rw-xminor', bg: active && i === hov ? 'rgba(23, 76, 60, 0.07)' : 'transparent',
+        pick: function () { if (self.state.hov !== i) self.setState({ hov: i }); } };
+      if (isRec) {
+        c.upperH = rec == null ? '0%' : pct(rec); c.upperColor = below ? 'var(--warning)' : 'var(--series-purified)';
+        c.lowerH = '0%'; c.lowerColor = 'transparent'; c.segGap = '0px';
+        c.topH = c.upperH; c.topLabel = rec == null ? 'no flow' : rec.toFixed(1); c.topColor = 'var(--ink-secondary)';
+        c.aria = r.full + ': recovery ' + (rec == null ? 'not available, no flow' : rec.toFixed(1) + '%');
+      } else {
+        c.upperH = has ? pct(r.rej) : '0%'; c.upperColor = 'var(--series-reject)';
+        c.lowerH = has ? pct(r.pur) : '0%'; c.lowerColor = 'var(--series-purified)'; c.segGap = has ? '2px' : '0px';
+        c.topH = has ? pct(r.feed) : '0%'; c.topLabel = has ? dec(r.feed, vd) : '0'; c.topColor = 'var(--ink-secondary)';
+        c.aria = r.full + ': feed ' + dec(r.feed, vd) + ' L, purified ' + dec(r.pur, vd) + ' L, reject ' + dec(r.rej, vd) + ' L';
+      }
+      c.showTop = n <= 12;
+      return c;
+    });
+    var r = rows[hov], has = r.feed > 0, rec = has ? r.pur / r.feed * 100 : null;
+    var tip = { full: r.full, lines: [
+      { label: 'Feed', value: dec(r.feed, vd) + ' L', color: 'var(--series-feed)' },
+      { label: 'Purified', value: dec(r.pur, vd) + ' L', color: 'var(--series-purified)' },
+      { label: 'Reject', value: dec(r.rej, vd) + ' L', color: 'var(--series-reject)' },
+      { label: 'Recovery', value: rec == null ? 'no flow' : rec.toFixed(1) + '%', color: rec != null && rec < lo ? 'var(--warning)' : 'var(--mineral)' }
+    ] };
+    var center = (hov + 0.5) / n * 100;
+    var tipLeft = hov >= n / 2 ? 'calc(' + center.toFixed(2) + '% - 208px)' : 'calc(' + center.toFixed(2) + '% + 20px)';
+    return {
+      tipOn: active, leave: function () { if (self.state.hov != null) self.setState({ hov: null }); },
+      plotH: (this.props.height || 280) + 'px', ticks: ticks, cols: cols, tip: tip, tipLeft: tipLeft,
+      gap: n > 20 ? '2px' : n > 10 ? '4px' : '10px', barW: n > 20 ? '72%' : n > 10 ? '62%' : '46%',
+      isRecovery: isRec, unitLabel: isRec ? '%' : 'L',
+      bandBottom: pct(lo), bandHeight: ((hi - lo) / span * 100).toFixed(2) + '%', bandTop: pct(hi), baseText: lo.toFixed(1) + '–' + hi.toFixed(1) + '%'
+    };
+  }
+}
+</script>
+</body>
+</html>
